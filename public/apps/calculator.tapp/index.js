@@ -3,7 +3,7 @@ document.querySelectorAll(".cbtn").forEach(btn => {
 		const display = document.querySelector(".eq");
 		const value = btn.getAttribute("data-value");
 		switch (value) {
-			default:
+			default: {
 				const displayValue = display.value;
 				const newValue = displayValue + value;
 				if (display.value === "0") {
@@ -26,42 +26,45 @@ document.querySelectorAll(".cbtn").forEach(btn => {
 					}
 				}
 				break;
+			}
 			case "clear":
 				display.value = "0";
 				display.setAttribute("is-equal", "false");
 				break;
-			case "del":
+			case "del": {
 				if (display.value.length === 1) {
 					display.value = "0";
 					display.setAttribute("is-equal", "false");
 					break;
-				} else {
-					const delValue = display.value.slice(0, -1);
-					display.value = delValue;
-					display.setAttribute("is-equal", "false");
 				}
+				const delValue = display.value.slice(0, -1);
+				display.value = delValue;
+				display.setAttribute("is-equal", "false");
 				break;
-			case "equal":
+			}
+			case "equal": {
 				const eqValue = math.evaluate(display.value);
 				display.value = eqValue;
 				display.setAttribute("is-equal", "true");
 				break;
-			case "np":
+			}
+			case "np": {
 				const npValue = display.value * -1;
 				display.value = npValue;
 				display.setAttribute("is-equal", "false");
 				break;
+			}
 		}
 	});
 });
 
 window.addEventListener("keydown", e => {
-	let availableKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+", "-", "*", "/", "%", "Backspace", "Enter"];
+	const availableKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+", "-", "*", "/", "%", "Backspace", "Enter"];
 	if (availableKeys.includes(e.key)) {
 		const display = document.querySelector(".eq");
 		const value = e.key;
 		switch (value) {
-			default:
+			default: {
 				const displayValue = display.value;
 				const newValue = displayValue + value;
 				if (display.getAttribute("is-equal") == "true") {
@@ -77,6 +80,7 @@ window.addEventListener("keydown", e => {
 					}
 				}
 				break;
+			}
 			case "-":
 				if (display.value === "0") return;
 				display.value = display.value + value;
@@ -98,23 +102,24 @@ window.addEventListener("keydown", e => {
 				display.value = display.value + value;
 				if (display.getAttribute("is-equal") == "true") display.setAttribute("is-equal", "false");
 				break;
-			case "Backspace":
+			case "Backspace": {
 				if (display.value.length === 1) {
 					display.value = "0";
 					display.setAttribute("is-equal", "false");
 					break;
-				} else {
-					const delValue = display.value.slice(0, -1);
-					display.value = delValue;
-					display.setAttribute("is-equal", "false");
 				}
+				const delValue = display.value.slice(0, -1);
+				display.value = delValue;
+				display.setAttribute("is-equal", "false");
 				break;
-			case "Enter":
+			}
+			case "Enter": {
 				e.preventDefault();
 				const eqValue = math.evaluate(display.value);
 				display.value = eqValue;
 				display.setAttribute("is-equal", "true");
 				break;
+			}
 		}
 	}
 });

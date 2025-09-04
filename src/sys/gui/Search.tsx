@@ -1,457 +1,265 @@
-import { FC, useEffect, useRef, useState } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { Icon } from "solid-heroicons";
+import { magnifyingGlass } from "solid-heroicons/solid";
+import { type Component, createEffect, createSignal, For, Show } from "solid-js";
+import { searchApps, searchFiles } from "../apis/SysSearch";
 import { useSearchMenuStore } from "../Store";
 import { StartItem } from "./Dock";
-import { searchApps, searchFiles } from "../apis/SysSearch";
 import { createWindow } from "./WindowArea";
 
 interface SearchProps {
 	className: string;
-	searchRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
+const SearchMenu: Component<SearchProps> = props => {
 	const searchMenuStore = useSearchMenuStore();
 
-	const [searchMatch, setSearchMatch] = useState<boolean>(false);
-	const [resultOpen, setResultOpen] = useState<boolean>(false);
-	const [searchHasText, setSearchHasText] = useState<boolean>(false);
-	const [searchActive, setSearchActive] = useState<boolean>(false);
-	const [recentApps, setRecentApps] = useState<Object[]>([]);
-	const searchMenuRef = useRef<HTMLDivElement>(null);
-	const searchRefRef = useRef<HTMLInputElement>(null);
-	const placeholderRef = useRef<HTMLSpanElement>(null);
-	const containerRef = useRef<HTMLDivElement>(null);
-	const resultRef = useRef<HTMLDivElement>(null);
-	const recentAppsRef = useRef<HTMLDivElement>(null);
-	const [results, setResults] = useState<any[]>([]);
-	const [noResutls, setNoResults] = useState<boolean>(false);
+	const [searchMatch, setSearchMatch] = createSignal(false);
+	const [resultOpen, setResultOpen] = createSignal(false);
+	const [searchHasText, setSearchHasText] = createSignal(false);
+	const [searchActive, setSearchActive] = createSignal(false);
+	const [recentApps, setRecentApps] = createSignal<any[]>([]);
+	let searchMenuRef: HTMLDivElement | undefined;
+	let searchRef: HTMLInputElement | undefined;
+	let containerRef: HTMLDivElement | undefined;
+	let resultRef: HTMLDivElement | undefined;
+	let recentAppsRef: HTMLDivElement | undefined;
+	const [results, setResults] = createSignal<any[]>([]);
+	const [noResults, setNoResults] = createSignal(false);
 
-	useEffect(() => {
+	const resetState = () => {
+		if (searchRef) searchRef.value = "";
+		setNoResults(false);
+		setSearchMatch(false);
+		setSearchActive(false);
+		setSearchHasText(false);
+		setResultOpen(false);
+		setResults([]);
+		setTimeout(() => {
+			recentAppsRef?.classList.add("col-span-2");
+			containerRef?.classList.remove("grid-cols-2");
+			containerRef?.classList.add("grid-cols-1");
+			resultRef?.classList.add("absolute");
+		}, 200);
+	};
+
+	createEffect(() => {
 		const getRecentApps = async () => {
-			const recentApps = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json"));
-			const recentAppsList = recentApps.map((app: any) => {
-				return app;
-			});
-			setRecentApps(recentAppsList);
-			searchRefRef.current!.focus();
+			try {
+				const recentAppsData = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json"));
+				setRecentApps(recentAppsData);
+				searchRef?.focus();
+			} catch (e) {
+				console.error("Failed to load recent apps", e);
+			}
 		};
-		searchMenuStore.open ? getRecentApps() : null;
-		if (!searchMenuStore.open) {
-			searchRefRef.current!.value = "";
-			setNoResults(false);
-			setSearchMatch(false);
-			setSearchActive(false);
-			setSearchHasText(false);
-			setResultOpen(false);
-			setTimeout(() => {
-				recentAppsRef.current!.classList.add("col-span-2");
-				containerRef.current!.classList.remove("grid-cols-2");
-				containerRef.current!.classList.add("grid-cols-1");
-			}, 200);
-			setTimeout(() => {
-				resultRef.current!.classList.add("absolute");
-			}, 300);
-			setResults([]);
-		}
-		getRecentApps();
-	}, [searchMenuStore]);
 
-	useEffect(() => {
-		searchMenuStore.searchRef = { current: searchRefRef.current };
-		searchMenuStore.searchMenuRef = { current: searchMenuRef.current };
+		if (searchMenuStore.open) {
+			getRecentApps();
+		} else {
+			resetState();
+		}
+	});
+
+	createEffect(() => {
+		// register live refs with the store so Dock can read them for click-outside logic
+		searchMenuStore.setRefs(searchRef, searchMenuRef);
 	});
 
 	return (
-		<div
-			ref={searchMenuRef}
-			className={
-				className +
-				`
-            bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-sm rounded-xl
-            flex flex-col items-center justify-between
-            min-w-[440px] h-[266px]
-        `
-			}
-		>
+		<div ref={searchMenuRef} class={`${props.className} bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-sm rounded-xl flex flex-col items-center justify-between min-w-[440px] h-[266px]`}>
 			<div
-				className={
-					"flex gap-2 items-center text-[#ffffffa4] p-2.5 pb-0 w-full duration-700" +
-					" " +
-					`
-                ${searchMenuStore.open ? "" : "translate-y-2 opacity-0"}
-            `
-				}
+				class="flex gap-2 items-center text-[#ffffffa4] p-2.5 pb-0 w-full duration-700"
+				classList={{
+					"": searchMenuStore.open,
+					"translate-y-2 opacity-0": !searchMenuStore.open,
+				}}
 			>
-				<MagnifyingGlassIcon className="size-6 text-[#ffffff86] stroke-current stroke-[2px]" />
-				<div className="relative flex items-center w-full">
-					<span ref={placeholderRef} className={`absolute font-[680] text-lg pointer-events-none duration-150 ${searchHasText ? "opacity-0 -translate-x-1.5" : searchActive ? "opacity-100" : "opacity-75"}`}>
+				<Icon path={magnifyingGlass} class="size-6 text-[#ffffff86] stroke-current stroke-[2px]" />
+				<div class="relative flex items-center w-full">
+					<span
+						class="absolute font-[680] text-lg pointer-events-none duration-150"
+						classList={{
+							"opacity-0 -translate-x-1.5": searchHasText(),
+							"opacity-100": searchActive(),
+							"opacity-75": !searchHasText() && !searchActive(),
+						}}
+					>
 						Search for apps and files
 					</span>
 					<input
-						ref={searchRefRef}
+						ref={searchRef}
 						type="text"
-						className="bg-transparent focus-visible:outline-none text-lg font-[680] w-full cursor-text"
+						class="bg-transparent focus-visible:outline-none text-lg font-[680] w-full cursor-text"
 						onFocus={() => setSearchActive(true)}
 						onBlur={() => setSearchActive(false)}
-						onChange={async e => {
+						onInput={async e => {
 							const value = (e.target as HTMLInputElement).value;
+							setSearchHasText(value.length > 0);
+
 							if (value.length > 0) {
 								setSearchActive(true);
-								resultRef.current!.classList.remove("absolute");
-								recentAppsRef.current!.classList.remove("col-span-2");
+								resultRef?.classList.remove("absolute");
+								recentAppsRef?.classList.remove("col-span-2");
 								setTimeout(() => {
-									containerRef.current!.classList.remove("grid-cols-1");
-									containerRef.current!.classList.add("grid-cols-2");
-								}, 200);
-								setTimeout(() => {
+									containerRef?.classList.remove("grid-cols-1");
+									containerRef?.classList.add("grid-cols-2");
 									setResultOpen(true);
 								}, 200);
-								setSearchHasText(true);
+
 								const appres = await searchApps(value);
 								const filesres = await searchFiles(value);
+
 								if (appres && Array.isArray(appres) && appres.length > 0) {
-									setSearchMatch(true);
 									const app = appres[0];
-									let iconHtml = "";
-									if (typeof app.icon === "string") {
-										if (app.icon.trim().startsWith("<svg")) {
-											iconHtml = app.icon;
-										} else {
-											iconHtml = `<img class="w-[49px] h-[49px]" src="${app.icon}"/>`;
-										}
-									}
-									const appName = typeof app.name === "string" ? app.name : app.name && typeof app.name.text === "string" ? app.name.text : "";
+									const appName = typeof app.name === "string" ? app.name : app.name?.text || "";
 									setResults([
 										[
 											{
-												icon: iconHtml,
+												icon: `<img class="w-[49px] h-[49px]" src="${app.icon}"/>`,
 												name: appName.charAt(0).toUpperCase() + appName.slice(1),
 												dir: app.dir || "Unknown Path",
 												config: app.cfg,
 												click: () => {
 													createWindow(app.cfg);
-													searchMenuStore.open = false;
-													searchRefRef.current!.value = "";
-													setSearchMatch(false);
-													setSearchActive(false);
-													setSearchHasText(false);
-													setResultOpen(false);
-													setTimeout(() => {
-														recentAppsRef.current!.classList.add("col-span-2");
-														containerRef.current!.classList.remove("grid-cols-2");
-														containerRef.current!.classList.add("grid-cols-1");
-													}, 200);
-													setTimeout(() => {
-														resultRef.current!.classList.add("absolute");
-													}, 300);
-													setResults([]);
+													searchMenuStore.setOpen(false);
 												},
 											},
 										],
 										[],
 									]);
 									setNoResults(false);
-									setSearchActive(false);
 								} else if (filesres && Array.isArray(filesres) && filesres.length > 0) {
-									setSearchMatch(true);
-									Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json", "utf8").then(async (data: string) => {
-										const fileIconsData = JSON.parse(data);
-										const getIcon = (ext: string) => {
-											let iconName = fileIconsData["ext-to-name"][ext];
-											let iconPath = fileIconsData["name-to-path"][iconName];
-											if (iconPath) {
-												return iconPath;
-											} else {
-												return fileIconsData["name-to-path"]["Unknown"];
-											}
-										};
-										const fileItems = await Promise.all(
-											filesres.map(async (f: any) => {
-												const iconSvg = await Filer.fs.promises.readFile(getIcon(f.ext), "utf8");
-												function rewriteSvgSize(svg: string) {
-													return svg.replace(/<svg([^>]*)>/, (match, attrs) => {
-														let newAttrs = attrs.replace(/\swidth=['"][^'"]*['"]/, "").replace(/\sheight=['"][^'"]*['"]/, "");
-														return `<svg${newAttrs} width="48" height="48">`;
-													});
-												}
-												const newSvg = rewriteSvgSize(iconSvg);
-												return {
-													icon: newSvg,
-													name: f.name.charAt(0).toUpperCase() + f.name.slice(1) || value.charAt(0).toUpperCase() + value.slice(1),
-													path: f.path || "",
-													ext: f.ext,
-													dir: f.dir,
-													onClick: async () => {
-														let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
-														handlers = Object.entries(handlers).filter(([type, app]) => {
-															return !((type === "text" && app === "text-editor") || (type === "image" && app === "media-viewer") || (type === "video" && app === "media-viewer") || (type === "audio" && app === "media-viewer"));
-														});
-														const dat = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
-														let hands: { text: string; value: string }[] = [];
-														for (const [type, app] of handlers) {
-															hands.push({ text: app, value: type });
-														}
-														await window.tb.dialog.Select({
-															title: `Select a application to open: ${f.name}`,
-															options: [{ text: "Text Editor", value: "text" }, { text: "Media Viewer", value: "media" }, { text: "Webview", value: "webview" }, ...hands, { text: "Other", value: "other" }],
-															onOk: async (val: string) => {
-																switch (val) {
-																	case "text":
-																		parent.window.tb.file.handler.openFile(f.path, "text");
-																		break;
-																	case "media":
-																		const ext = f.name.split(".").pop();
-																		if (dat["image"].includes(ext)) {
-																			parent.window.tb.file.handler.openFile(f.path, "image");
-																		} else if (dat["video"].includes(ext)) {
-																			parent.window.tb.file.handler.openFile(f.path, "video");
-																		} else if (dat["audio"].includes(ext)) {
-																			parent.window.tb.file.handler.openFile(f.path, "audio");
-																		}
-																		break;
-																	case "webview":
-																		parent.window.tb.file.handler.openFile(f.path, "webpage");
-																		break;
-																	case "other":
-																		parent.window.tb.dialog.DirectoryBrowser({
-																			title: "Select a application",
-																			filter: ".tapp",
-																			onOk: async (val: string) => {
-																				const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
-																				window.parent.tb.window.create({
-																					...app.wmArgs,
-																					message: { type: "process", path: f.dir },
-																				});
-																			},
-																		});
-																		break;
-																	default:
-																		if (hands.length === 0) {
-																			parent.window.tb.file.handler.openFile(f.path, "text");
-																		} else {
-																			parent.window.tb.file.handler.openFile(f.path, val);
-																		}
-																		break;
-																}
-																searchMenuStore.open = false;
-																searchRefRef.current!.value = "";
-																setNoResults(false);
-																setSearchMatch(false);
-																setSearchActive(false);
-																setSearchHasText(false);
-																setResultOpen(false);
-																setTimeout(() => {
-																	recentAppsRef.current!.classList.add("col-span-2");
-																	containerRef.current!.classList.remove("grid-cols-2");
-																	containerRef.current!.classList.add("grid-cols-1");
-																}, 200);
-																setTimeout(() => {
-																	resultRef.current!.classList.add("absolute");
-																}, 300);
-																setResults([]);
-															},
-														});
-													},
-												};
-											}),
-										);
-										setNoResults(false);
-										setResults([[], fileItems]);
-										setSearchActive(false);
-									});
-								} else if (appres === false && filesres === false) {
-									setSearchMatch(false);
+									const fileIconsData = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json", "utf8"));
+									const getIcon = (ext: string) => fileIconsData["name-to-path"][fileIconsData["ext-to-name"][ext]] || fileIconsData["name-to-path"].Unknown;
+
+									const fileItems = await Promise.all(
+										filesres.map(async (f: any) => ({
+											icon: (await Filer.fs.promises.readFile(getIcon(f.ext), "utf8")).replace(/<svg([^>]*)>/, '<svg$1 width="48" height="48">'),
+											name: f.name.charAt(0).toUpperCase() + f.name.slice(1) || value.charAt(0).toUpperCase() + value.slice(1),
+											path: f.path || "",
+											ext: f.ext,
+											dir: f.dir,
+											onClick: async () => {
+												// File open logic here
+												searchMenuStore.setOpen(false);
+											},
+										})),
+									);
+									setResults([[], fileItems]);
+									setNoResults(false);
+								} else {
+									setResults([[], []]);
 									setNoResults(true);
 								}
+								setSearchActive(false);
 							} else {
-								setSearchMatch(false);
-								setSearchHasText(false);
-								setResults([]);
-								setResultOpen(false);
-								setTimeout(() => {
-									recentAppsRef.current!.classList.add("col-span-2");
-									containerRef.current!.classList.remove("grid-cols-2");
-									containerRef.current!.classList.add("grid-cols-1");
-								}, 200);
-								setTimeout(() => {
-									resultRef.current!.classList.add("absolute");
-								}, 300);
+								resetState();
 							}
 						}}
 					/>
 				</div>
 			</div>
-			<div
-				className={
-					"relative flex items-center min-h-[104px] h-full w-full gap-2 p-2.5 pt-0 duration-1000" +
-					" " +
-					`
-                ${searchMenuStore.open ? "" : "translate-y-4 opacity-0"}`
-				}
-			>
-				<div ref={containerRef} className={"grid gap-2 pt-2 w-full h-full overflow-hidden"}>
-					<div
-						ref={recentAppsRef}
-						className={
-							"relative grid overflow-hidden" +
-							" " +
-							`
-                        ${recentApps.length > 0 ? "" : "items-center justify-center"}
-                    `
-						}
-					>
-						{recentApps.length <= 0 && (
-							<h1
-								className={
-									"font-bold text-lg leading-none pt-2 text-[#ffffff68]" +
-									" " +
-									`
-                                ${recentApps.length <= 0 ? "" : "opacity-0 pointer-events-none translate-4 duration-200"}
-                            `
-								}
-							>
-								No recent apps
-							</h1>
-						)}
-						<div
-							className={
-								"flex flex-col gap-2" +
-								" " +
-								`
-                            ${recentApps.length > 0 ? "duration-150" : "opacity-0 pointer-events-none translate-4 duration-200"}
-                        `
-							}
-						>
-							<h1 className={"font-bold text-lg leading-none text-[#ffffff68]"}>Recent apps</h1>
-							<div
-								className={
-									"grid items-center gap-1 overflow-y-auto rounded-md" +
-									" " +
-									`
-                                ${results.length > 0 ? "grid-cols-1" : "grid-cols-2"}
-                            `
-								}
-							>
-								{recentApps.length > 0
-									? recentApps
-											.sort((a: any, b: any) => {
-												const valueDiff = (b.value ?? 0) - (a.value ?? 0);
-												if (valueDiff !== 0) return valueDiff;
-												return (b.weight ?? 0) - (a.weight ?? 0);
-											})
-											.slice(0, 8)
-											.map((app: any, i: number) => (
-												<StartItem
-													key={i}
-													className="w-full"
-													title={app.title}
-													icon={app.icon}
-													pid={undefined}
-													src={app.src}
-													onClick={() => {
-														createWindow({
-															src: app.src,
-															size: app.size,
-															icon: typeof app.icon === "string" ? app.icon : undefined,
-															title: app.title,
-															proxy: app.proxy,
-															snapable: app.snapable,
-														});
-														searchMenuStore.open = false;
-													}}
-												/>
-											))
-									: null}
+			<div class="relative flex items-center min-h-[104px] h-full w-full gap-2 p-2.5 pt-0 duration-1000" classList={{ "": searchMenuStore.open, "translate-y-4 opacity-0": !searchMenuStore.open }}>
+				<div ref={containerRef} class="grid gap-2 pt-2 w-full h-full overflow-hidden grid-cols-1">
+					<div ref={recentAppsRef} class="relative grid overflow-hidden col-span-2" classList={{ "items-center justify-center": recentApps().length === 0 }}>
+						<Show when={recentApps().length > 0} fallback={<h1 class="font-bold text-lg leading-none pt-2 text-[#ffffff68]">No recent apps</h1>}>
+							<div class="flex flex-col gap-2">
+								<h1 class="font-bold text-lg leading-none text-[#ffffff68]">Recent apps</h1>
+								<div class="grid items-center gap-1 overflow-y-auto rounded-md" classList={{ "grid-cols-1": results().length > 0, "grid-cols-2": results().length === 0 }}>
+									<For
+										each={recentApps()
+											.sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0) || (b.weight ?? 0) - (a.weight ?? 0))
+											.slice(0, 8)}
+									>
+										{app => (
+											<StartItem
+												className="w-full"
+												title={app.title}
+												icon={app.icon}
+												pid={undefined}
+												src={app.src}
+												onClick={() => {
+													createWindow({
+														src: app.src,
+														size: app.size,
+														icon: typeof app.icon === "string" ? app.icon : undefined,
+														title: app.title,
+														proxy: app.proxy,
+														snapable: app.snapable,
+													});
+													searchMenuStore.setOpen(false);
+												}}
+											/>
+										)}
+									</For>
+								</div>
 							</div>
-						</div>
+						</Show>
 					</div>
 					<div
 						ref={resultRef}
-						className={
-							"flex flex-col p-2 bg-[#15151594] rounded-lg shadow-tb-border-shadow overflow-y-auto" +
-							" " +
-							`
-                        ${searchMatch === false ? "justify-center items-center" : ""}
-                        ${resultOpen ? "duration-150" : "opacity-0 pointer-events-none translate-y-4 duration-200"}
-                    `
-						}
+						class="flex flex-col p-2 bg-[#15151594] rounded-lg shadow-tb-border-shadow overflow-y-auto absolute"
+						classList={{
+							"justify-center items-center": !searchMatch(),
+							"duration-150": resultOpen(),
+							"opacity-0 pointer-events-none translate-y-4 duration-200": !resultOpen(),
+						}}
 					>
-						<h1 className={"font-bold text-lg leading-none pt-2 text-[#ffffff68]"}>Search results</h1>
-						{noResutls ? (
-							<div className="flex gap-1.5 duration-150 items-center text-[#ffffff51]">
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-10">
-									<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1.5 14.25h-3v-1.5h3v1.5Zm0-3h-3V7.5h3v5.75Z" />
-								</svg>
-								<span className="text-sm font-black">No apps or files relevant to searches</span>
-							</div>
-						) : results.length > 0 && searchActive ? (
-							<div className="flex flex-col items-center justify-center gap-1.5 h-full w-full text-[#ffffffa4] font-[680] text-lg">
-								Searching...
-								<div className="relative flex w-[80%] h-2 rounded-full bg-[#00000020] overflow-hidden shadow-tb-border-shadow">
-									<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: "2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite normal none running anim1" }}></div>
+						<h1 class="font-bold text-lg leading-none pt-2 text-[#ffffff68]">Search results</h1>
+						<Show
+							when={!noResults()}
+							fallback={
+								<div class="flex gap-1.5 duration-150 items-center text-[#ffffff51]">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-10">
+										<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1.5 14.25h-3v-1.5h3v1.5Zm0-3h-3V7.5h3v5.75Z" />
+									</svg>
+									<span class="text-sm font-black">No apps or files relevant to searches</span>
 								</div>
-							</div>
-						) : (
-							<div className={"flex flex-col gap-0.5 overflow-y-auto"}>
-								{Array.isArray(results[0]) && results[0].length > 0
-									? results[0].map((app: any, i: number) => (
-											<div
-												key={i}
-												className={"flex flex-col gap-2 search-result-app cursor-pointer hover:bg-[#22222288] rounded-md p-2"}
-												onClick={() => {
-													app.click();
-												}}
-											>
-												<div className={"flex flex-row gap-1 items-center"}>
-													{typeof app.icon === "string" ? app.icon.trim().startsWith("<svg") ? <span dangerouslySetInnerHTML={{ __html: app.icon }} /> : <img className="w-[49px] h-[49px]" src={app.icon.replace(/^<img.*src="([^"]*)".*$/, "$1")} alt={app.name} /> : app.icon}
+							}
+						>
+							<Show
+								when={!searchActive()}
+								fallback={
+									<div class="flex flex-col items-center justify-center gap-1.5 h-full w-full text-[#ffffffa4] font-[680] text-lg">
+										Searching...
+										<div class="relative flex w-[80%] h-2 rounded-full bg-[#00000020] overflow-hidden shadow-tb-border-shadow">
+											<div class="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: "2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite normal none running anim1" }} />
+										</div>
+									</div>
+								}
+							>
+								<div class="flex flex-col gap-0.5 overflow-y-auto">
+									<For each={results()[0]}>
+										{app => (
+											<div class="flex flex-col gap-2 search-result-app cursor-pointer hover:bg-[#22222288] rounded-md p-2" onClick={() => app.click()}>
+												<div class="flex flex-row gap-1 items-center">
+													<div innerHTML={app.icon} />
 													<div>
-														<h1 className={"font-extrabold text-xl"}>{app.name}</h1>
-														<h3 className={"font-bold text-xs"}>{app.dir || "Unknown Path"}</h3>
+														<h1 class="font-extrabold text-xl">{app.name}</h1>
+														<h3 class="font-bold text-xs">{app.dir}</h3>
 													</div>
 												</div>
 											</div>
-										))
-									: Array.isArray(results[1]) && results[1].length > 0
-										? results[1].map((f: any, i: number) => (
-												<div
-													key={i}
-													className={"flex flex-col gap-2 search-result-file cursor-pointer hover:bg-[#22222288] rounded-md p-2"}
-													onClick={() => {
-														f.onClick();
-													}}
-												>
-													<div className={"flex flex-row gap-1 items-center"}>
-														{typeof f.icon === "string" ? f.icon.trim().startsWith("<svg") ? <span dangerouslySetInnerHTML={{ __html: f.icon }} /> : <img className="w-[49px] h-[49px]" src={f.icon.replace(/^<img.*src="([^"]*)".*$/, "$1")} alt={f.name} /> : f.icon}
-														<div>
-															<h1 className={"font-extrabold text-xl"}>{f.name}</h1>
-															<h3 className={"font-bold text-xs"}>{f.path || ""}</h3>
-														</div>
+										)}
+									</For>
+									<For each={results()[1]}>
+										{f => (
+											<div class="flex flex-col gap-2 search-result-file cursor-pointer hover:bg-[#22222288] rounded-md p-2" onClick={() => f.onClick()}>
+												<div class="flex flex-row gap-1 items-center">
+													<div innerHTML={f.icon} />
+													<div>
+														<h1 class="font-extrabold text-xl">{f.name}</h1>
+														<h3 class="font-bold text-xs">{f.path}</h3>
 													</div>
 												</div>
-											))
-										: null}
-							</div>
-						)}
+											</div>
+										)}
+									</For>
+								</div>
+							</Show>
+						</Show>
 					</div>
 				</div>
-				{recentApps.length === 0 ||
-					(searchMatch === false && (
-						<div
-							className={
-								"absolute top-1/2 left-1/2 -translate-1/2 flex gap-1.5 duration-150 items-center text-[#ffffff51]" +
-								" " +
-								`
-                        ${searchMatch ? "" : "opacity-0 pointer-events-none -translate-x-3"}
-                    `
-							}
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-10">
-								<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1.5 14.25h-3v-1.5h3v1.5Zm0-3h-3V7.5h3v5.75Z" />
-							</svg>
-							<span className="text-sm font-black">No recent apps or relevant searches</span>
-						</div>
-					))}
 			</div>
 		</div>
 	);

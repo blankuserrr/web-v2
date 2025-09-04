@@ -15,7 +15,7 @@ tb_island.addControl({
 			parent.document.querySelector(".context-menu").remove();
 		}
 		ctx.id = "media-files_ctx";
-		ctx.style.left = `6px`;
+		ctx.style.left = "6px";
 		ctx.style.top = parent.document.querySelector(".app_island").clientHeight + 12 + "px";
 		const options = [
 			{
@@ -24,7 +24,7 @@ tb_island.addControl({
 					await tb.dialog.FileBrowser({
 						title: "Select a file to view",
 						onOk: async file => {
-							let url = `${(parent, window.location.origin)}/fs/${file}`;
+							const url = `${(parent, window.location.origin)}/fs/${file}`;
 							const ext = file.split(".").pop();
 							openFile(url, ext);
 						},
@@ -65,7 +65,7 @@ tb_island.addControl({
 			parent.document.querySelector(".context-menu").remove();
 		}
 		ctx.id = "media-computer_ctx";
-		ctx.style.left = `6px`;
+		ctx.style.left = "6px";
 		ctx.style.top = parent.document.querySelector(".app_island").clientHeight + 12 + "px";
 		const options = [
 			{

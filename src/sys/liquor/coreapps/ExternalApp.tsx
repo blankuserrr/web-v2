@@ -1,5 +1,5 @@
 import { AliceWM } from "../AliceWM";
-import { AppManifest } from "../Anura";
+import type { AppManifest } from "../Anura";
 import { App } from "./App";
 import { LocalFS } from "../api/LocalFS";
 export class ExternalApp extends App {
@@ -198,7 +198,8 @@ export class ExternalApp extends App {
 			});
 
 			return win;
-		} else if (this.manifest.type === "manual") {
+		}
+		if (this.manifest.type === "manual") {
 			// This type of application is reserved only for scripts meant for hacking anura internals
 			const req = await fetch(`${this.source}/${this.manifest.handler}`);
 			const data = await req.text();
@@ -207,7 +208,8 @@ export class ExternalApp extends App {
 			loadingScript(this.source, this);
 
 			return;
-		} else if (this.manifest.type === "webview") {
+		}
+		if (this.manifest.type === "webview") {
 			// FOR INTERNAL USE ONLY
 			// @ts-expect-error
 			const anura: Anura = window.anura;

@@ -176,10 +176,10 @@ export async function Updater() {
 						await CreateAppsPaths();
 					});
 					return;
-				} else return;
-			} else {
-				consola.success("Terbium is up to date");
+				}
+				return;
 			}
+			consola.success("Terbium is up to date");
 		} catch (e) {
 			consola.error(`Failed to check for updates, ${e}`);
 		}

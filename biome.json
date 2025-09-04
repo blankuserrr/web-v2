@@ -1,27 +1,12 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
 		"useIgnoreFile": false
 	},
 	"files": {
-		"includes": [
-			"**",
-			"!**/node_modules/**",
-			"!**/dist/**",
-			"!**/public/assets/**",
-			"!**/public/apps/*.lib/**",
-			"!**/public/apps/nfsadapter/**",
-			"!**/public/lib/**",
-			"!**/.vscode/**",
-			"!**/.zed/**",
-			"!**/docs/**",
-			"!**/public/apps/*.app/**",
-			"!**/public/apps/files.tapp/webdav.js",
-			"!**/public/uv/**",
-			"!**/public/scramjet/**"
-		]
+		"includes": ["**", "!**/node_modules", "!**/dist", "!**/public/assets", "!**/public/apps/*.lib", "!**/public/apps/nfsadapter", "!**/public/lib", "!**/.vscode", "!**/.zed", "!**/docs", "!**/public/apps/*.app", "!**/public/apps/files.tapp/webdav.js", "!**/public/uv", "!**/public/scramjet"]
 	},
 	"formatter": {
 		"enabled": true,

@@ -1,5 +1,5 @@
 function rm(args) {
-	let availableOptions = [
+	const availableOptions = [
 		"-f: ignore nonexistent files and arguments, never prompt.",
 		"-r: remove directories and their contents recursively.; optionally you can also use -rf to remove directories and their contents recursively without prompt.",
 		"-v: explain what is being done (not default).",
@@ -11,10 +11,10 @@ function rm(args) {
 		displayOutput("Remove (unlink) the FILE(s).");
 		displayOutput(" ");
 		displayOutput("Options:");
-		for (let option of availableOptions) {
-			let nspace = " ";
+		for (const option of availableOptions) {
+			const nspace = " ";
 			let [opt, desc] = option.split(": ");
-			let optionally = desc.split(";")[1];
+			const optionally = desc.split(";")[1];
 			desc = desc.replace(";", "").replace(optionally, "");
 			displayOutput(`  ${opt.padEnd(10)} ${desc}`);
 			if (optionally) {
@@ -27,7 +27,7 @@ function rm(args) {
 	const user = sessionStorage.getItem("currAcc");
 	const systemDirs = ["/home", `/home/${user}/documents`, `/home/${user}/videos`, `/home/${user}/pictures`, `/home/${user}/music`];
 
-	for (let sdir of systemDirs) {
+	for (const sdir of systemDirs) {
 		if (path === sdir) {
 			displayOutput(`rm: cannot remove "${path}": Is a system directory`);
 			createNewCommandInput();
@@ -35,7 +35,7 @@ function rm(args) {
 		}
 	}
 
-	let options = {
+	const options = {
 		force: false,
 		recursive: false,
 		verbose: false,

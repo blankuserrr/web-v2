@@ -1,10 +1,11 @@
 # <span style="color: #32ae62;">How to Contribute to Terbium v2</span>
 Table of Contents
-- [Understanding the File Structure](#understanding-the-file-structure)
-- [Learning What should and shouldn't be touched](#learning-what-should-and-shouldnt-be-touched)
+- [How to Contribute to Terbium v2](#how-to-contribute-to-terbium-v2)
+	- [Understanding the File Structure](#understanding-the-file-structure)
+	- [Learning What should and shouldn't be touched](#learning-what-should-and-shouldnt-be-touched)
   
 ## <a name="understanding-the-file-structure" style="color: #32ae62;">Understanding the File Structure</a>
-Terbium v2 for the most part is written in [React](https://react.dev). If you haven't already make sure you have all the dependencies installed which can be done via `pnpm i` (or the package manager of your choice).
+Terbium v2.1 for the most part is written in [SolidJS](https://www.solidjs.com/). If you haven't already make sure you have all the dependencies installed which can be done via `pnpm i` (or the package manager of your choice).
 
 Terbium has 3 Folders that you should pay attention to and that are referenced throughout Terbium's Code.
 - <span style="color: #32ae62;">src</span>: The location of the webOS's frontend code & apis Such as the `login`, `desktop`, `gui components` etc

@@ -1,34 +1,23 @@
-import React from "react";
-import { create } from "zustand";
-import { WindowConfig, cmprops, fileExists } from "./types";
 import { init } from "@paralleldrive/cuid2";
+import { createStore } from "solid-js/store";
+import { createSignal } from "solid-js";
 import { updateInfo } from "./gui/AppIsland";
+import { type cmprops, fileExists, type WindowConfig } from "./types";
 
 interface WindowState {
 	windows: WindowConfig[];
 	wid?: string;
 	pid?: string;
-	matchedWindows: any;
-	addWindow: (config: WindowConfig) => void;
-	killWindow: (wid: any) => void;
-	removeWindow: (wid: any) => void;
-	arrange: (wid: any) => void;
-	minimize: (wid: any) => void;
-	getWindow: (wid: any) => void;
+	matchedWindows: WindowConfig[][];
 	currentPID?: string;
 }
 
 interface ContextMenuState {
 	menu: cmprops;
-	setContextMenu: (options: any) => void;
-	clearContextMenu: () => void;
 }
 
 interface SearchMenuState {
 	open: boolean;
-	setOpen: (open: boolean) => void;
-	searchRef: React.RefObject<HTMLInputElement | null>;
-	searchMenuRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const createPID = () => {
@@ -48,189 +37,324 @@ export const createWID = () => {
 	const cuid = init({
 		length: 10,
 	});
-	return "w-" + cuid();
+	return `w-${cuid()}`;
 };
 
-const useWindowStore = create<WindowState>()(set => ({
+// Create the window store with proper SolidJS reactivity
+const [windowStore, setWindowStore] = createStore<WindowState>({
 	windows: [],
 	matchedWindows: [],
-	addWindow: async (config: WindowConfig) => {
-		const recentApps = (await fileExists("/system/var/terbium/recent.json"))
-			? JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json", "utf8"))
-			: (await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([], null, 2), "utf8").catch((err: any) => console.error(err)), []);
-		const updateState = async (state: WindowState) => {
-			const indexes = state.windows.map(w => w.zIndex ?? 0);
-			config.zIndex = Math.max(...indexes) + 1;
-			config.focused = true;
-			if (config.zIndex === -Infinity) {
-				config.zIndex = 2;
-			}
-			state.windows.forEach(w => {
-				if (w.wid !== config.wid) {
-					w.focused = false;
-					if (w.zIndex !== undefined) {
-						w.zIndex -= 1;
-					}
-				}
-			});
+	currentPID: undefined,
+	wid: undefined,
+	pid: undefined,
+});
 
-			// @ts-expect-error
-			const matched = state.matchedWindows.findIndex(group =>
-				// @ts-expect-error
-				group.some(w => (typeof w.title === "string" ? w.title : w.title?.text) === (typeof config.title === "string" ? config.title : config.title?.text)),
-			);
+// Create reactive signals for external change notifications
+const [windowsUpdateSignal, setWindowsUpdateSignal] = createSignal(0);
 
-			if (matched !== -1) {
-				state.matchedWindows[matched].push(config);
-			} else {
-				state.matchedWindows.push([config]);
-			}
+// Window store methods
+const addWindow = async (config: WindowConfig) => {
+	let recentApps: any[];
+	if (await fileExists("/system/var/terbium/recent.json")) {
+		recentApps = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json", "utf8"));
+	} else {
+		await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([], null, 2), "utf8").catch(err => console.error(err));
+		recentApps = [];
+	}
 
-			config.wid = createWID();
-			config.pid = createPID();
-			const appName = typeof config.title === "string" ? config.title : config.title?.text;
-			let configData: any = null;
-			try {
-				const data = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${appName.toLowerCase()}.tapp/index.json`, "utf8")).config;
-				configData = {
-					...data,
-					weight: 1,
-				};
-			} catch (err) {
-				configData = {
-					title: appName,
-					icon: config.icon,
-					src: config.src,
-					weight: 1,
+	const indexes = windowStore.windows.map(w => w.zIndex ?? 0);
+	config.zIndex = Math.max(...indexes) + 1;
+	config.focused = true;
+	if (config.zIndex === Number.NEGATIVE_INFINITY) {
+		config.zIndex = 2;
+	}
+
+	// Update existing windows focus and z-index
+	setWindowStore("windows", windows =>
+		windows.map(w => {
+			if (w.wid !== config.wid) {
+				return {
+					...w,
+					focused: false,
+					zIndex: w.zIndex !== undefined ? w.zIndex - 1 : w.zIndex,
 				};
 			}
+			return w;
+		}),
+	);
 
-			if (recentApps.length > 10) {
-				const lowestWeight = Math.min(...recentApps.map((app: any) => app.weight));
-				const lowestWeightIndex = recentApps.findIndex((app: any) => app.weight === lowestWeight);
-				recentApps.splice(lowestWeightIndex, 1);
-			}
+	const matched = windowStore.matchedWindows.findIndex(group => group.some(w => (typeof w.title === "string" ? w.title : w.title?.text) === (typeof config.title === "string" ? config.title : config.title?.text)));
 
-			const recentAppIndex = recentApps.findIndex((app: any) => {
-				return (typeof app.title === "string" ? app.title.toLowerCase() : app.title?.text.toLowerCase()) === (typeof configData.title === "string" ? configData.title.toLowerCase() : configData.title?.text.toLowerCase());
-			});
+	config.wid = createWID();
+	config.pid = createPID();
 
-			if (recentAppIndex === -1) {
-				recentApps.push(configData);
-			} else {
-				recentApps[recentAppIndex].weight += 1;
-			}
-			await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps, null, 2), "utf8").catch((err: any) => {
-				console.error("Error writing recent apps file:", err);
-			});
+	if (matched !== -1) {
+		setWindowStore("matchedWindows", matched, group => [...group, config]);
+	} else {
+		setWindowStore("matchedWindows", groups => [...groups, [config]]);
+	}
 
-			window.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof config.title === "string" ? config.title : config.title?.text }));
-
-			return {
-				windows: [...state.windows, config],
-				matchedWindows: [...state.matchedWindows],
-				currentPID: config.pid,
-			};
+	const appName = typeof config.title === "string" ? config.title : config.title?.text;
+	let configData: any = null;
+	try {
+		const data = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${appName.toLowerCase()}.tapp/index.json`, "utf8")).config;
+		configData = {
+			...data,
+			weight: 1,
 		};
+	} catch {
+		configData = {
+			title: appName,
+			icon: config.icon,
+			src: config.src,
+			weight: 1,
+		};
+	}
 
-		const newState = await updateState(useWindowStore.getState());
-		set(newState);
-	},
-	killWindow: (pid: string) =>
-		set((state: any) => {
-			const windows = state.windows.filter((w: any) => w.pid !== pid);
-			const matchedWindows = state.matchedWindows
-				.map((group: any) => {
-					const newGroup = group.filter((w: any) => w.pid !== pid);
-					return newGroup.length > 0 ? newGroup : null;
-				})
-				.filter((group: any) => group !== null);
-			const indexes = windows.map((w: any) => w.zIndex ?? 0);
-			const highest = Math.max(...indexes);
-			const win = windows.find((w: any) => w.zIndex === highest);
-			if (win) {
-				win.focused = true;
-				updateInfo({ appname: typeof win.title === "string" ? win.title : win.title?.text });
-				window.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof win.title === "string" ? win.title : win.title?.text }));
-			}
+	if (recentApps.length > 10) {
+		const lowestWeight = Math.min(...recentApps.map((app: any) => app.weight));
+		const lowestWeightIndex = recentApps.findIndex((app: any) => app.weight === lowestWeight);
+		recentApps.splice(lowestWeightIndex, 1);
+	}
 
-			return {
-				windows,
-				matchedWindows,
-			};
-		}),
-	removeWindow: (wid: string) => {
-		set((state: any) => {
-			const windows = state.windows.filter((w: any) => w.wid !== wid);
-			const matchedWindows = state.matchedWindows
-				.map((group: any) => {
-					const newGroup = group.filter((w: any) => w.wid !== wid);
-					return newGroup.length > 0 ? newGroup : null;
-				})
-				.filter((group: any) => group !== null);
-			const indexes = windows.map((w: any) => w.zIndex ?? 0);
-			const highest = Math.max(...indexes);
-			const win = windows.find((w: any) => w.zIndex === highest);
-			if (win) {
-				win.focused = true;
-				updateInfo({ appname: typeof win.title === "string" ? win.title : win.title?.text });
-				window.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof win.title === "string" ? win.title : win.title?.text }));
-			}
+	const recentAppIndex = recentApps.findIndex((app: any) => {
+		return (typeof app.title === "string" ? app.title.toLowerCase() : app.title?.text.toLowerCase()) === (typeof configData.title === "string" ? configData.title.toLowerCase() : configData.title?.text.toLowerCase());
+	});
 
-			return {
-				windows,
-				matchedWindows,
-			};
+	if (recentAppIndex === -1) {
+		recentApps.push(configData);
+	} else {
+		recentApps[recentAppIndex].weight += 1;
+	}
+	await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps, null, 2), "utf8").catch((err: any) => {
+		console.error("Error writing recent apps file:", err);
+	});
+
+	globalThis.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof config.title === "string" ? config.title : config.title?.text }));
+
+	setWindowStore("windows", windows => [...windows, config]);
+	setWindowStore("currentPID", config.pid);
+
+	// Trigger reactive updates
+	setWindowsUpdateSignal(prev => prev + 1);
+	globalThis.dispatchEvent(new CustomEvent("windowsUpdated", { detail: { action: "add", window: config } }));
+};
+
+const killWindow = (pid: string) => {
+	const windows = windowStore.windows.filter((w: any) => w.pid !== pid);
+	const matchedWindows = windowStore.matchedWindows
+		.map((group: any) => {
+			const newGroup = group.filter((w: any) => w.pid !== pid);
+			return newGroup.length > 0 ? newGroup : null;
+		})
+		.filter((group: any) => group !== null);
+
+	const indexes = windows.map((w: any) => w.zIndex ?? 0);
+	const highest = Math.max(...indexes);
+	const win = windows.find((w: any) => w.zIndex === highest);
+
+	if (win) {
+		win.focused = true;
+		updateInfo({ appname: typeof win.title === "string" ? win.title : win.title?.text });
+		globalThis.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof win.title === "string" ? win.title : win.title?.text }));
+	}
+
+	setWindowStore("windows", windows);
+	setWindowStore("matchedWindows", matchedWindows);
+
+	// Trigger reactive updates
+	setWindowsUpdateSignal(prev => prev + 1);
+	globalThis.dispatchEvent(new CustomEvent("windowsUpdated", { detail: { action: "kill", pid } }));
+};
+
+const removeWindow = (wid: string) => {
+	const windows = windowStore.windows.filter((w: any) => w.wid !== wid);
+	const matchedWindows = windowStore.matchedWindows
+		.map((group: any) => {
+			const newGroup = group.filter((w: any) => w.wid !== wid);
+			return newGroup.length > 0 ? newGroup : null;
+		})
+		.filter((group: any) => group !== null);
+
+	const indexes = windows.map((w: any) => w.zIndex ?? 0);
+	const highest = Math.max(...indexes);
+	const win = windows.find((w: any) => w.zIndex === highest);
+
+	if (win) {
+		win.focused = true;
+		updateInfo({ appname: typeof win.title === "string" ? win.title : win.title?.text });
+		globalThis.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof win.title === "string" ? win.title : win.title?.text }));
+	}
+
+	setWindowStore("windows", windows);
+	setWindowStore("matchedWindows", matchedWindows);
+};
+
+const arrange = (wid: string) => {
+	const idx = windowStore.windows.findIndex(w => w.wid === wid);
+	if (idx === -1) return;
+	const winItem = windowStore.windows[idx];
+	setWindowStore("currentPID", winItem.pid);
+
+	// Compute next z-index for the focused window
+	const indexes = windowStore.windows.map(w => w.zIndex ?? 0);
+	const newZ = Math.max(...indexes) + 1;
+
+	// Focus selected window without replacing objects
+	setWindowStore("windows", idx, { focused: true, zIndex: newZ });
+
+	// Defocus and lower others in place
+	for (let i = 0; i < windowStore.windows.length; i++) {
+		if (i === idx) continue;
+		const currZ = windowStore.windows[i].zIndex ?? 0;
+		setWindowStore("windows", i, {
+			focused: false,
+			zIndex: currZ > 0 ? currZ - 1 : currZ,
 		});
-	},
-	arrange: (wid: string) =>
-		set((state: WindowState) => {
-			const window = state.windows.find(w => w.wid === wid);
-			if (!window) return state;
-			set({ currentPID: window.pid });
+	}
 
-			const indexes = state.windows.map(w => w.zIndex ?? 0);
-			window.zIndex = Math.max(...indexes) + 1;
-			window.focused = true;
-			state.windows.forEach(w => {
-				if (w.wid !== wid) {
-					w.focused = false;
-					if (w.zIndex !== undefined) {
-						w.zIndex -= 1;
-					}
-				}
-			});
+	// Trigger reactive updates
+	setWindowsUpdateSignal(prev => prev + 1);
+	globalThis.dispatchEvent(new CustomEvent("windowsUpdated", { detail: { action: "arrange", wid } }));
+};
 
-			return {
-				windows: state.windows,
-			};
+const minimize = (wid: string) => {
+	setWindowStore("windows", windows =>
+		windows.map(w => {
+			if (w.wid === wid) {
+				return { ...w, focused: false };
+			}
+			return w;
 		}),
-	minimize: (wid: string) =>
-		set((state: WindowState) => {
-			const window = state.windows.find(w => w.wid === wid);
-			if (!window) return state;
-			window.focused = false;
-			return {
-				windows: state.windows,
-			};
-		}),
-	getWindow: (wid: string) => {
-		const state = useWindowStore.getState();
-		return state.windows.find(w => w.wid === wid);
-	},
-}));
+	);
 
-const useContextMenuStore = create<ContextMenuState>()(set => ({
+	// Trigger reactive updates
+	setWindowsUpdateSignal(prev => prev + 1);
+};
+
+const getWindow = (wid: string) => {
+	return windowStore.windows.find(w => w.wid === wid);
+};
+
+// Create the context menu store
+const [contextMenuStore, setContextMenuStore] = createStore<ContextMenuState>({
 	menu: { x: 0, y: 0, options: [] },
-	setContextMenu: (options: any) => set({ menu: options }),
-	clearContextMenu: () => set({ menu: { x: 0, y: 0, options: [] } }),
-}));
+});
 
-const useSearchMenuStore = create<SearchMenuState>()(set => ({
+// Context menu store methods
+const setContextMenu = (options: cmprops) => {
+	setContextMenuStore("menu", options);
+};
+
+const clearContextMenu = () => {
+	setContextMenuStore("menu", { x: 0, y: 0, options: [] });
+};
+
+// Create the search menu store
+const [searchMenuStore, setSearchMenuStore] = createStore<SearchMenuState>({
 	open: false,
-	setOpen: (open: boolean) => set({ open }),
-	searchRef: React.createRef<HTMLInputElement | null>(),
-	searchMenuRef: React.createRef<HTMLDivElement | null>(),
-}));
+});
 
-export { useWindowStore, useContextMenuStore, useSearchMenuStore };
+// Search menu store methods and refs
+const setSearchMenuOpen = (open: boolean) => {
+	setSearchMenuStore("open", open);
+};
+
+// SolidJS refs used by Search/Dock
+let searchRef: HTMLInputElement | undefined;
+let searchMenuRef: HTMLDivElement | undefined;
+
+// Allow components to set the live refs (so Dock can read them)
+const setSearchRefs = (sr: HTMLInputElement | undefined, smr: HTMLDivElement | undefined) => {
+	searchRef = sr;
+	searchMenuRef = smr;
+};
+
+// Reactive window store hook for SolidJS components
+// Returns accessor getters so reads stay reactive and always reflect the latest store values
+const useWindowStore = () => {
+	return {
+		get windows() {
+			return windowStore.windows;
+		},
+		get matchedWindows() {
+			return windowStore.matchedWindows;
+		},
+		get currentPID() {
+			return windowStore.currentPID;
+		},
+		get wid() {
+			return windowStore.wid;
+		},
+		get pid() {
+			return windowStore.pid;
+		},
+		addWindow,
+		killWindow,
+		removeWindow,
+		arrange,
+		minimize,
+		getWindow,
+	};
+};
+
+// Add static getState method for compatibility with existing API calls
+useWindowStore.getState = () => ({
+	windows: windowStore.windows,
+	matchedWindows: windowStore.matchedWindows,
+	currentPID: windowStore.currentPID,
+	wid: windowStore.wid,
+	pid: windowStore.pid,
+	addWindow,
+	killWindow,
+	removeWindow,
+	arrange,
+	minimize,
+	getWindow,
+});
+
+const useContextMenuStore = () => ({
+	menu: contextMenuStore.menu,
+	setContextMenu,
+	clearContextMenu,
+});
+
+const useSearchMenuStore = () => ({
+	open: searchMenuStore.open,
+	setOpen: setSearchMenuOpen,
+	// accessors return the latest refs
+	get searchRef() {
+		return { current: searchRef } as { current: HTMLInputElement | undefined };
+	},
+	get searchMenuRef() {
+		return { current: searchMenuRef } as { current: HTMLDivElement | undefined };
+	},
+	setRefs: setSearchRefs,
+});
+
+// Export stores, methods, and compatibility hooks
+export {
+	addWindow,
+	arrange,
+	clearContextMenu,
+	contextMenuStore,
+	getWindow,
+	killWindow,
+	minimize,
+	removeWindow,
+	searchMenuRef,
+	searchMenuStore,
+	searchRef,
+	setContextMenu,
+	setSearchMenuOpen,
+	useContextMenuStore,
+	useSearchMenuStore,
+	// Compatibility hooks for existing components
+	useWindowStore,
+	// New SolidJS exports
+	windowStore,
+	// Reactive signal for external use
+	windowsUpdateSignal,
+	// Setters for search refs
+	setSearchRefs,
+};

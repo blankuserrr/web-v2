@@ -1,5 +1,5 @@
-import { AliceWM, WindowInformation } from "../AliceWM";
-import { App } from "../coreapps/App";
+import { AliceWM, type WindowInformation } from "../AliceWM";
+import type { App } from "../coreapps/App";
 
 export class WMAPI {
 	// @ts-expect-error

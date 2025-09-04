@@ -16,10 +16,10 @@ tb_island.addControl({
 						input.type = "file";
 						input.accept = ".json";
 						input.onchange = async () => {
-							let file = input.files[0];
-							let reader = new FileReader();
+							const file = input.files[0];
+							const reader = new FileReader();
 							reader.onload = async () => {
-								let settings = JSON.parse(reader.result);
+								const settings = JSON.parse(reader.result);
 								await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 							};
 							reader.readAsText(file);
@@ -30,11 +30,11 @@ tb_island.addControl({
 				{
 					text: "Export Settings",
 					click: async () => {
-						let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-						let data = JSON.stringify(settings);
-						let blob = new Blob([data], { type: "application/json" });
-						let url = URL.createObjectURL(blob);
-						let a = document.createElement("a");
+						const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+						const data = JSON.stringify(settings);
+						const blob = new Blob([data], { type: "application/json" });
+						const url = URL.createObjectURL(blob);
+						const a = document.createElement("a");
 						a.href = url;
 						a.download = "settings.json";
 						a.click();

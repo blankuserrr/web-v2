@@ -1,29 +1,30 @@
-import { setDialogFn } from "./apis/Dialogs";
-import { setNotifFn } from "./apis/Notifications";
-import { Anura } from "./liquor/Anura";
-import { AliceWM } from "./liquor/AliceWM";
-import { LocalFS } from "./liquor/api/LocalFS";
-import { ExternalApp } from "./liquor/coreapps/ExternalApp";
-import { ExternalLib } from "./liquor/libs/ExternalLib";
-import { registry } from "./apis/Registry";
-import { type MediaProps, type cmprops, type dialogProps, type launcherProps, type NotificationProps, type COM, type User, type WindowConfig, fileExists, dirExists, UserSettings, SysSettings } from "./types";
-import { System } from "./apis/System";
-import { setMusicFn, setVideoFn, isExistingFn, hideFn } from "./apis/Mediaisland";
-import { XOR } from "./apis/Xor";
-import { libcurl } from "libcurl.js/bundled";
 import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
-import pwd from "./apis/Crypto";
 import * as fflate from "fflate";
-import parse from "./Parser";
-import { AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
-import { createWindow } from "./gui/WindowArea";
-import { TDockItem } from "./gui/Dock";
-import { useWindowStore } from "./Store";
-import { AnuraBareClient } from "./liquor/bcc";
+import { libcurl } from "libcurl.js/bundled";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
+import pwd from "./apis/Crypto";
+import { setDialogFn } from "./apis/Dialogs";
+import { hideFn, isExistingFn, setMusicFn, setVideoFn } from "./apis/Mediaisland";
+import { setNotifFn } from "./apis/Notifications";
+import { registry } from "./apis/Registry";
+import { System } from "./apis/System";
+import { XOR } from "./apis/Xor";
+import { type AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
+import type { TDockItem } from "./gui/Dock";
+import { createWindow } from "./gui/WindowArea";
 import { Lemonade } from "./lemonade";
+import { AliceWM } from "./liquor/AliceWM";
+import { Anura } from "./liquor/Anura";
+import { LocalFS } from "./liquor/api/LocalFS";
+import { AnuraBareClient } from "./liquor/bcc";
+import { ExternalApp } from "./liquor/coreapps/ExternalApp";
+import { ExternalLib, setAnura } from "./liquor/libs/ExternalLib";
 import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
+import parse from "./Parser";
+import { useWindowStore, windowStore, killWindow as killWinFn } from "./Store";
+import { type cmprops, type COM, type dialogProps, dirExists, fileExists, type launcherProps, type MediaProps, type NotificationProps, type SysSettings, type User, type UserSettings, type WindowConfig } from "./types";
+
 const system = new System();
 const Filer = window.Filer;
 const pw = new pwd();
@@ -42,14 +43,14 @@ export default async function Api() {
 		sh: new Filer.fs.Shell(),
 		battery: {
 			async showPercentage() {
-				let settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = true;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: true }));
 				return "Success";
 			},
 			async hidePercentage() {
-				let settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = false;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: false }));
@@ -58,7 +59,7 @@ export default async function Api() {
 			async canUse() {
 				if ("BatteryManager" in window) {
 					const battery = await navigator.getBattery();
-					return battery ? true : false;
+					return !!battery;
 				}
 				return false;
 			},
@@ -99,12 +100,12 @@ export default async function Api() {
 		},
 		theme: {
 			async get() {
-				return JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["theme"];
+				return JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).theme;
 			},
 			async set(data: string) {
 				return new Promise(async resolve => {
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					settings["theme"] = data;
+					settings.theme = data;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings), "utf8");
 					resolve(true);
 				});
@@ -116,56 +117,56 @@ export default async function Api() {
 					color.toString().includes('"') ? (color = color.replace(/"/g, "")) : (color = color);
 					document.body.setAttribute("theme", color);
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					settings["theme"] = color;
+					settings.theme = color;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings), "utf8");
 				},
 				async theme() {
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					return settings["theme"];
+					return settings.theme;
 				},
 				async setAccent(color: string) {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings["accent"] = color;
+					settings.accent = color;
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 				},
 				async getAccent() {
-					return JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["accent"];
+					return JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).accent;
 				},
 			},
 			wallpaper: {
 				async set(path: string) {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings["wallpaper"] = path;
+					settings.wallpaper = path;
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async contain() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings["wallpaperMode"] = "contain";
+					settings.wallpaperMode = "contain";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async stretch() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings["wallpaperMode"] = "stretch";
+					settings.wallpaperMode = "stretch";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async cover() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings["wallpaperMode"] = "cover";
+					settings.wallpaperMode = "cover";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async fillMode() {
 					return new Promise(async resolve => {
-						resolve(JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["wallpaperMode"]);
+						resolve(JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).wallpaperMode);
 					});
 				},
 			},
 			dock: {
 				async pin(app: any) {
-					let apps: Array<TDockItem> = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/dock.json"));
+					const apps: Array<TDockItem> = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/dock.json"));
 					apps.push(app);
 					await Filer.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(apps));
 					window.dispatchEvent(new Event("updPins"));
@@ -187,7 +188,7 @@ export default async function Api() {
 		},
 		window: {
 			getId() {
-				return useWindowStore.getState().currentPID;
+				return windowStore.currentPID;
 			},
 			create(props: any) {
 				createWindow(props);
@@ -200,12 +201,12 @@ export default async function Api() {
 							resolve(e.detail);
 						};
 						window.addEventListener("curr-win-content", getContent as EventListener);
-						window.dispatchEvent(new CustomEvent("get-content", { detail: useWindowStore.getState().currentPID }));
+						window.dispatchEvent(new CustomEvent("get-content", { detail: windowStore.currentPID }));
 					});
 				},
 				set(html: string | HTMLElement) {
 					const msg = {
-						currWin: useWindowStore.getState().currentPID,
+						currWin: windowStore.currentPID,
 						content: html,
 					};
 					window.dispatchEvent(new CustomEvent("upd-wincont", { detail: JSON.stringify(msg) }));
@@ -214,21 +215,21 @@ export default async function Api() {
 			titlebar: {
 				setColor(hex: string) {
 					const msg = {
-						currWin: useWindowStore.getState().currentPID,
+						currWin: windowStore.currentPID,
 						color: hex,
 					};
 					window.dispatchEvent(new CustomEvent("upd-winbarcol", { detail: JSON.stringify(msg) }));
 				},
 				setText(text: string) {
 					const msg = {
-						currWin: useWindowStore.getState().currentPID,
+						currWin: windowStore.currentPID,
 						txt: text,
 					};
 					window.dispatchEvent(new CustomEvent("upd-winbartxt", { detail: JSON.stringify(msg) }));
 				},
 				setBackgroundColor(hex: string) {
 					const msg = {
-						currWin: useWindowStore.getState().currentPID,
+						currWin: windowStore.currentPID,
 						color: hex,
 					};
 					window.dispatchEvent(new CustomEvent("upd-winbarbg", { detail: JSON.stringify(msg) }));
@@ -257,25 +258,25 @@ export default async function Api() {
 				},
 			},
 			changeSrc(src: string) {
-				const currWin = useWindowStore.getState().currentPID;
+				const currWin = windowStore.currentPID;
 				window.dispatchEvent(new CustomEvent("upd-src", { detail: JSON.stringify({ pid: currWin, url: src }) }));
 			},
 			reload() {
-				const currWin = useWindowStore.getState().currentPID;
+				const currWin = windowStore.currentPID;
 				window.dispatchEvent(new CustomEvent("reload-win", { detail: currWin }));
 			},
 			minimize() {
-				const currWin = useWindowStore.getState().currentPID;
+				const currWin = windowStore.currentPID;
 				window.dispatchEvent(new CustomEvent("min-win", { detail: currWin }));
 			},
 			maximize() {
-				const currWin = useWindowStore.getState().currentPID;
+				const currWin = windowStore.currentPID;
 				window.dispatchEvent(new CustomEvent("max-win", { detail: currWin }));
 			},
 			close() {
-				const currWin = useWindowStore.getState().currentPID;
+				const currWin = windowStore.currentPID;
 				clearInfo();
-				useWindowStore.getState().killWindow(currWin);
+				killWinFn(currWin);
 			},
 		},
 		contextmenu: {
@@ -300,7 +301,7 @@ export default async function Api() {
 		user: {
 			async username() {
 				try {
-					const username = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["username"];
+					const username = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).username;
 					return username || "Guest";
 				} catch (error) {
 					console.error("Error Fetching username:", error);
@@ -309,7 +310,7 @@ export default async function Api() {
 			},
 			async pfp() {
 				try {
-					return JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["pfp"] || "/assets/img/defualt - blue.png";
+					return JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).pfp || "/assets/img/defualt - blue.png";
 				} catch (error) {
 					console.error("Error Fetching pfp:", error);
 					return "/assets/img/defualt - blue.png";
@@ -319,11 +320,11 @@ export default async function Api() {
 		proxy: {
 			async get() {
 				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				return settings["proxy"];
+				return settings.proxy;
 			},
 			async set(proxy: "Ultraviolet" | "Scramjet") {
 				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				settings["proxy"] = proxy;
+				settings.proxy = proxy;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings, null, 2), "utf8");
 				window.tb.proxy.updateSWs();
 				return true;
@@ -343,13 +344,13 @@ export default async function Api() {
 						db.close();
 						const deleteRequest = indexedDB.deleteDatabase("$scramjet");
 						deleteRequest.onsuccess = () => {
-							console.log(`Cleared SJ DB`);
+							console.log("Cleared SJ DB");
 						};
 						deleteRequest.onerror = err => {
 							console.error(err);
 						};
 					} else {
-						console.log(`Scramjet is fine`);
+						console.log("Scramjet is fine");
 					}
 				};
 				request.onerror = err => {
@@ -416,7 +417,7 @@ export default async function Api() {
 					await updateTransport();
 				});
 				if (settings.wispServer === null) {
-					// @ts-ignore
+					// @ts-expect-error
 					window.tb.libcurl.set_websocket(`${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`);
 				} else {
 					window.tb.libcurl.set_websocket(settings.wispServer);
@@ -426,18 +427,16 @@ export default async function Api() {
 				if (encoder === "xor" || encoder === "XOR") {
 					const enc = await XOR.encode(url);
 					return enc;
-				} else {
-					throw new Error("Encoder not found");
 				}
+				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 			async decode(url: string, decoder: string) {
 				if (decoder === "xor" || decoder === "XOR") {
 					const dec = await XOR.decode(url);
 					return dec;
-				} else {
-					throw new Error("Encoder not found");
 				}
+				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 		},
@@ -457,31 +456,31 @@ export default async function Api() {
 				setDialogFn("alert", props);
 			},
 			Message(props: dialogProps) {
-				setDialogFn("message", props);
+				setDialogFn("message", { title: props.title ?? "Message", ...props });
 			},
 			Select(props: dialogProps) {
-				setDialogFn("select", props);
+				setDialogFn("select", { title: props.title ?? "Select", ...props });
 			},
 			Auth(props: dialogProps, options: { sudo: boolean }) {
-				setDialogFn("auth", props, options);
+				setDialogFn("auth", { title: props.title ?? "Authentication", ...props }, options);
 			},
 			Permissions(props: dialogProps) {
-				setDialogFn("permissions", props);
+				setDialogFn("permissions", { title: props.title ?? "Permissions", ...props });
 			},
 			FileBrowser(props: dialogProps) {
-				setDialogFn("filebrowser", props);
+				setDialogFn("filebrowser", { title: props.title ?? "Select a file", ...props });
 			},
 			DirectoryBrowser(props: dialogProps) {
-				setDialogFn("directorybrowser", props);
+				setDialogFn("directorybrowser", { title: props.title ?? "Select a directory", ...props });
 			},
 			SaveFile(props: dialogProps) {
-				setDialogFn("savefile", props);
+				setDialogFn("savefile", { title: props.title ?? "Save file", ...props });
 			},
 			Cropper(props: dialogProps) {
-				setDialogFn("cropper", props);
+				setDialogFn("cropper", { title: props.title ?? "Crop image", ...props });
 			},
 			WebAuth(props: dialogProps) {
-				setDialogFn("webauth", props);
+				setDialogFn("webauth", { title: props.title ?? "Authentication required", ...props });
 			},
 		},
 		system: {
@@ -514,7 +513,7 @@ export default async function Api() {
 				}
 			},
 			exportfs: async () => {
-				let zip: { [key: string]: Uint8Array } = {};
+				const zip: { [key: string]: Uint8Array } = {};
 				async function addzip(inp: string, basePath = "") {
 					const files = await Filer.fs.promises.readdir(inp);
 					for (const file of files) {
@@ -556,7 +555,7 @@ export default async function Api() {
 						};
 					}
 					await Filer.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify(userJson));
-					let userSettings = {
+					const userSettings = {
 						wallpaper: "/assets/wallpapers/1.png",
 						wallpaperMode: "cover",
 						animations: true,
@@ -609,18 +608,18 @@ export default async function Api() {
 								Images: `/home/${username}/images`,
 								Videos: `/home/${username}/videos`,
 								Music: `/home/${username}/music`,
-								Trash: `/system/trash`,
+								Trash: "/system/trash",
 							},
 						}),
 						"utf8",
 					);
-					let items: any[] = [];
-					let r2 = [];
+					const items: any[] = [];
+					const r2 = [];
 					for (let i = 0; i < apps.length; i++) {
 						const app = apps[i];
 						const name = app.name.toLowerCase();
-						var topPos: number = 0;
-						var leftPos: number = 0;
+						var topPos = 0;
+						var leftPos = 0;
 						if (i % 12 === 0) {
 							topPos = 0;
 						} else {
@@ -758,9 +757,8 @@ export default async function Api() {
 					// @ts-expect-error
 					window.tb.node.webContainer.teardown();
 					return true;
-				} else {
-					throw new Error("No WebContainer is running");
 				}
+				throw new Error("No WebContainer is running");
 			},
 		},
 		crypto: async (pass: string, file?: string) => {
@@ -768,9 +766,8 @@ export default async function Api() {
 			if (file) {
 				await Filer.fs.promises.writeFile(file, newpw);
 				return "Complete";
-			} else {
-				return newpw;
 			}
+			return newpw;
 		},
 		platform: {
 			async getPlatform() {
@@ -779,25 +776,25 @@ export default async function Api() {
 				const crosua = /CrOS/;
 				if (mobileuas.test(navigator.userAgent) && !crosua.test(navigator.userAgent)) {
 					return "mobile";
-				} else if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
-					return "mobile";
-				} else {
-					return "desktop";
 				}
+				if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
+					return "mobile";
+				}
+				return "desktop";
 			},
 		},
 		process: {
 			kill(config: string | number) {
 				clearInfo();
 				if (typeof config === "number") {
-					useWindowStore.getState().killWindow(String(config));
+					killWinFn(String(config));
 				} else {
-					useWindowStore.getState().killWindow(config);
+					killWinFn(String(config));
 				}
 			},
 			list() {
-				let list = {};
-				const wins = useWindowStore.getState().windows;
+				const list = {};
+				const wins = windowStore.windows;
 				wins.forEach((win: WindowConfig, index: number) => {
 					const winID = win.pid || `win-${index}`;
 					// @ts-expect-error
@@ -889,7 +886,7 @@ export default async function Api() {
 			handler: {
 				openFile: async (path: string, type: string) => {
 					const settings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					const fApps = settings["fileAssociatedApps"];
+					const fApps = settings.fileAssociatedApps;
 					const app = fApps[type];
 					try {
 						let appInfo;
@@ -968,13 +965,13 @@ export default async function Api() {
 					}
 				},
 				addHandler: async (app: string, ext: string) => {
-					let settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					(settings.fileAssociatedApps as Record<string, string>)[ext] = app;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
 				},
 				removeHandler: async (ext: string) => {
-					let settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					delete (settings.fileAssociatedApps as Record<string, string>)[ext];
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
@@ -989,7 +986,7 @@ export default async function Api() {
 		return;
 	(window as any).loadLock = true;
 
-	let anura = await Anura.new({
+	const anura = await Anura.new({
 		milestone: 5,
 		FileExts: {
 			txt: { handler_type: "module", id: "anura.fileviewer" },
@@ -1079,6 +1076,7 @@ export default async function Api() {
 		},
 	});
 	window.anura = anura;
+	setAnura(anura);
 	window.AliceWM = AliceWM;
 	window.LocalFS = LocalFS;
 	window.ExternalApp = ExternalApp;

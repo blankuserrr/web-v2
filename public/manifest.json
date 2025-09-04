@@ -1,0 +1,17 @@
+{
+	"name": "Terbium WebOS",
+	"description": "The next generation of Terbium WebOS Built for developers, enthusiests, and consumers to last",
+	"short_name": "Terbium",
+	"start_url": "/?boot=true",
+	"display": "standalone",
+	"background_color": "#D16FFF",
+	"icons": [
+		{
+			"src": "tb.svg",
+			"sizes": "16x16 32x32 48x48 72x72 96x96 128x128 256x256 512x512",
+			"type": "image/svg+xml",
+			"purpose": "any maskable"
+		}
+	],
+	"display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"]
+}

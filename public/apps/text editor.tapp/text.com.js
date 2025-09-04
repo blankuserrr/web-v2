@@ -73,7 +73,7 @@ tb_island.addControl({
 						const file = document.createElement("input");
 						file.type = "file";
 						file.onchange = async e => {
-							let blob = e.target.files[0];
+							const blob = e.target.files[0];
 							const fileReader = new FileReader();
 							fileReader.readAsText(blob);
 							fileReader.onload = () => {

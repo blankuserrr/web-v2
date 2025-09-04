@@ -8,144 +8,144 @@ interface ThemeProps {
 	darkBackground: string;
 	accent: string | any;
 }
-let settings: ThemeProps;
+let settings: ThemeProps = {
+	foreground: "#ffffff",
+	secondaryForeground: "#ffffff38",
+	border: "#ffffff28",
+	darkBorder: "#333333",
+	background: "#0e0e0e",
+	secondaryBackground: "#383838",
+	darkBackground: "#161616",
+	accent: "#32ae62",
+};
 
-(async () => {
+// Initialize theme settings when file system is ready
+let themeInitialized = false;
+
+const initializeTheme = async () => {
+	if (themeInitialized) return;
+
 	try {
 		const data = await Filer.fs.promises.readFile("/system/etc/anura/theme.json", "utf8");
 		settings = JSON.parse(data);
-	} catch (err) {
-		console.error("Error reading theme settings:", err);
+		themeInitialized = true;
+	} catch (_err) {
+		// File doesn't exist yet or filesystem not ready - use defaults
+		// Don't try to create file immediately as filesystem may not be initialized
 	}
-})();
+};
+
+// Try to initialize theme, but don't block if filesystem isn't ready
+initializeTheme().catch(() => {
+	// Silently fail, will use default settings
+});
 
 export class Theme implements ThemeProps {
 	get foreground() {
+		// Try to initialize theme if not already done
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.foreground;
 	}
 
 	set foreground(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.foreground = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.foreground = value;
+		this.saveSettings();
+	}
+
+	private async saveSettings() {
+		try {
+			// Ensure directory exists
+			await Filer.fs.promises.mkdir("/system/etc/anura/", { recursive: true });
+			await Filer.fs.promises.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		} catch (err) {
+			console.error("Error saving theme settings:", err);
+		}
 	}
 
 	get secondaryForeground() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.secondaryForeground;
 	}
 
 	set secondaryForeground(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.secondaryForeground = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.secondaryForeground = value;
+		this.saveSettings();
 	}
 
 	get border() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.border;
 	}
 
 	set border(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.border = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.border = value;
+		this.saveSettings();
 	}
 
 	get darkBorder() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.darkBorder;
 	}
 
 	set darkBorder(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.darkBorder = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.darkBorder = value;
+		this.saveSettings();
 	}
 
 	get background() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.background;
 	}
 
 	set background(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.background = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.background = value;
+		this.saveSettings();
 	}
 
 	get secondaryBackground() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.secondaryBackground;
 	}
 
 	set secondaryBackground(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.secondaryBackground = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.secondaryBackground = value;
+		this.saveSettings();
 	}
 
 	get darkBackground() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.darkBackground;
 	}
 
 	set darkBackground(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.darkBackground = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.darkBackground = value;
+		this.saveSettings();
 	}
 
 	get accent() {
+		if (!themeInitialized) {
+			initializeTheme().catch(() => {});
+		}
 		return settings.accent;
 	}
 
 	set accent(value) {
-		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			const settings: ThemeProps = JSON.parse(data.toString());
-			settings.accent = value;
-			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-		});
+		settings.accent = value;
+		this.saveSettings();
 	}
 
 	cssPropMap: Record<keyof ThemeProps, string[]> = {

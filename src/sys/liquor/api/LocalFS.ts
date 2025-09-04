@@ -1,4 +1,4 @@
-import { AFSProvider, AnuraFD } from "./Filesystem";
+import { AFSProvider, type AnuraFD } from "./Filesystem";
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 const Filer = window.Filer;
 
@@ -99,10 +99,9 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 				if (newPart.startsWith("/")) {
 					// absolute
 					return this.getChildDirHandle(newPart, recurseCounter + 1);
-				} else {
-					// relative
-					return this.getChildDirHandle(this.path.resolve(curr, newPart), recurseCounter + 1);
 				}
+				// relative
+				return this.getChildDirHandle(this.path.resolve(curr, newPart), recurseCounter + 1);
 			}
 			acc = await acc.getDirectoryHandle(part);
 		}
@@ -131,20 +130,18 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 					realPath = this.relativizePath(realPath);
 					// absolute
 					return this.getFileHandle(realPath, options, recurseCounter + 1);
-				} else {
-					// Okay so, this goes over the mount boundary, and is slightly problematic
-					// for us since we need to handle this as an event OUTSIDE of LocalFS itself
-					// so this is a bit of a cheat using the compatibility layer for FileSystemAccess API
-					let handle = await window.anura.fs.whatwgfs.getFolder();
-					for (const part in realPath.split("/").slice(1, -1)) {
-						handle = await handle.getDirectoryHandle(part);
-					}
-					return [await handle.getFileHandle(this.path.basename(realPath)), "foreign:" + realPath];
 				}
-			} else {
-				// relative
-				return this.getFileHandle(this.path.resolve(parentFolder, realPath), options, recurseCounter + 1);
+				// Okay so, this goes over the mount boundary, and is slightly problematic
+				// for us since we need to handle this as an event OUTSIDE of LocalFS itself
+				// so this is a bit of a cheat using the compatibility layer for FileSystemAccess API
+				let handle = await window.anura.fs.whatwgfs.getFolder();
+				for (const part in realPath.split("/").slice(1, -1)) {
+					handle = await handle.getDirectoryHandle(part);
+				}
+				return [await handle.getFileHandle(this.path.basename(realPath)), "foreign:" + realPath];
 			}
+			// relative
+			return this.getFileHandle(this.path.resolve(parentFolder, realPath), options, recurseCounter + 1);
 		}
 		return [await parentHandle.getFileHandle(fileName, options), path];
 	}
@@ -206,7 +203,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			// Ignore, the directory already exists so we don't need to create it
 		}
 		const fs = new LocalFS(dirHandle, anuraPath);
-		// @ts-ignore
+		// @ts-expect-error
 		window.anura.fs.installProvider(fs);
 		return fs;
 	}
@@ -303,7 +300,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		});
 	}
 
-	// @ts-ignore
+	// @ts-expect-error
 	promises = {
 		saveStats: async () => {
 			const jsonStats = JSON.stringify(Array.from(this.stats.entries()));
@@ -363,7 +360,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			}
 
 			const nodes: string[] = [];
-			// @ts-ignore
+			// @ts-expect-error
 			for await (const entry of dirHandle.values()) {
 				if (entry.name !== ".anura_stats")
 					// internal file shouldn't appear on fs methods
@@ -487,11 +484,11 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			await this.promises.writeFile(path, data.slice(0, len));
 		},
 		access(path: string, mode: number): Promise<void> {
-			// @ts-ignore
+			// @ts-expect-error
 			path = this.relativizePath(path);
 
 			return new Promise((resolve, reject) => {
-				// @ts-ignore
+				// @ts-expect-error
 				this.promises
 					.stat(path)
 					.then(() => resolve()) // File exists
@@ -500,7 +497,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 							name: "ENOENT",
 							code: "ENOENT",
 							errno: 34,
-							message: `No such file or directory`,
+							message: "No such file or directory",
 							path,
 							stack: "Error: No such file or directory",
 						} as Error),
@@ -508,34 +505,34 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			});
 		},
 		chown(path: string, uid: number, gid: number): Promise<void> {
-			// @ts-ignore
+			// @ts-expect-error
 			path = this.relativizePath(path);
 
 			return new Promise(async (resolve, reject) => {
-				// @ts-ignore
+				// @ts-expect-error
 				const type = (await this.promises.lstat(path)).type;
 				// Check if the file exists
-				// @ts-ignore
+				// @ts-expect-error
 				const stats = this.stats.get(path);
 				if (!stats) {
 					return reject({
 						name: "ENOENT",
 						code: "ENOENT",
 						errno: 34,
-						message: `No such file or directory`,
+						message: "No such file or directory",
 						path,
 						stack: "Error: No such file or directory",
 					} as Error);
 				}
 				if (path.endsWith("/")) path = path.slice(0, -1);
 				if (type === "DIRECTORY") {
-					// @ts-ignore
+					// @ts-expect-error
 					path = (await this.getChildDirHandle(path))[1];
 				} else {
 					const pathDir =
-						// @ts-ignore
+						// @ts-expect-error
 						(await this.getChildDirHandle(this.path.dirname(path)))[1];
-					// @ts-ignore
+					// @ts-expect-error
 					path = pathDir + "/" + this.path.basename(path);
 				}
 				if (path.startsWith("/")) {
@@ -547,9 +544,9 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 				stats.gid = gid;
 
 				// Save updated stats
-				// @ts-ignore
+				// @ts-expect-error
 				this.stats.set(path, stats);
-				// @ts-ignore
+				// @ts-expect-error
 				this.promises
 					.saveStats()
 					.then(() => resolve())
@@ -715,7 +712,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 					name: "ENOENT",
 					code: "ENOENT",
 					errno: 34,
-					message: `No such file or directory`,
+					message: "No such file or directory",
 					path,
 					stack: "Error: No such file",
 				} as Error;
@@ -1129,10 +1126,10 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		this.promises
 			.open(path, flags, mode)
 			.then(fd => {
-				// @ts-ignore
+				// @ts-expect-error
 				callback!(null, fd);
 			})
-			// @ts-ignore
+			// @ts-expect-error
 			.catch(e => callback!(e, { fd: -1, [AnuraFDSymbol]: this.domain }));
 	}
 }

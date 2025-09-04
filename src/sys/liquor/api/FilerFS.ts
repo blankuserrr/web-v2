@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { FilerFS } from "../types/Filer";
-import { Anura } from "../Anura";
+import type { FilerFS } from "../types/Filer";
+import type { Anura } from "../Anura";
 import { AFSProvider } from "./Filesystem";
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 type AnuraFD = {

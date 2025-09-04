@@ -4,7 +4,7 @@ async function sysfetch(args, term) {
 		createNewCommandInput();
 	} else {
 		let accent = "#32ae62";
-		let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 		if (settings["accent"]) {
 			accent = settings["accent"];
 		}
@@ -23,15 +23,15 @@ async function sysfetch(args, term) {
 }
 
 async function displayCPUInfo(accent) {
-	let cpuCors = navigator.hardwareConcurrency;
-	let cpuInfo = "%c    ^@@@@?     .#@@@P    G@@@@" + "    %cCPU%c: " + cpuCors + " Logical Cores " + `(${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`;
+	const cpuCors = navigator.hardwareConcurrency;
+	const cpuInfo = "%c    ^@@@@?     .#@@@P    G@@@@" + "    %cCPU%c: " + cpuCors + " Logical Cores " + `(${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`;
 	displayOutput(cpuInfo, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
 	return true;
 }
 
 async function displayMemoryInfo(accent) {
-	let mem = navigator.deviceMemory ? navigator.deviceMemory + "GB" : "Unknown";
-	let memoryInfo = "%c    ^@@@@?     .#@@@&GGG#@@@@Y " + "   %cMemory%c: " + mem;
+	const mem = navigator.deviceMemory ? navigator.deviceMemory + "GB" : "Unknown";
+	const memoryInfo = "%c    ^@@@@?     .#@@@&GGG#@@@@Y " + "   %cMemory%c: " + mem;
 	displayOutput(memoryInfo, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
 	return true;
 	// Im confused tho cus I dont think memory is causing it but like idk
@@ -39,18 +39,18 @@ async function displayMemoryInfo(accent) {
 }
 
 async function displayGPUInfo(accent) {
-	let canvas = document.createElement("canvas");
-	let gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+	const canvas = document.createElement("canvas");
+	const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 	if (!gl) {
 		displayOutput("%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
 		return;
 	}
-	let dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
+	const dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
 	if (dbgRenderInfo) {
-		let rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
-		let regex = /ANGLE \(.+?,\s*(.+?) \(/;
-		let match = rndr.match(regex);
-		let gpuName = match ? match[1] : "";
+		const rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
+		const regex = /ANGLE \(.+?,\s*(.+?) \(/;
+		const match = rndr.match(regex);
+		const gpuName = match ? match[1] : "";
 		displayOutput(`				  %cGPU%c: ${gpuName}`, `color: ${accent}`, "color: #b6b6b6");
 	} else {
 		displayOutput("				  %cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");

@@ -1,4 +1,4 @@
-import { Anura } from "../Anura";
+import type { Anura } from "../Anura";
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 const Filer = window.Filer;
 // @ts-expect-error
@@ -481,9 +481,8 @@ export class AFSShell {
 				if (options.updateOnly) {
 					callback!(new Error("File does not exist and updateOnly is true"));
 					return;
-				} else {
-					createFile();
 				}
+				createFile();
 			} else {
 				updateTimes();
 			}
@@ -735,13 +734,13 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 		// These paths must be TS ignore'd since they are in build/
 
 		(async () => {
-			// @ts-ignore
+			// @ts-expect-error
 			const fs = await import("/public/apps/nfsadapter/nfsadapter.js");
-			// @ts-ignore
+			// @ts-expect-error
 			this.whatwgfs.FileSystemDirectoryHandle = fs.FileSystemDirectoryHandle;
-			// @ts-ignore
+			// @ts-expect-error
 			this.whatwgfs.FileSystemFileHandle = fs.FileSystemFileHandle;
-			// @ts-ignore
+			// @ts-expect-error
 			this.whatwgfs.FileSystemHandle = fs.FileSystemHandle;
 			this.whatwgfs.fs = fs;
 		})();
@@ -824,7 +823,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	symlink(path: string, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processPath(rest[0]).symlink(path, ...rest);
 	}
 
@@ -850,7 +849,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 
 	mkdtemp(...args: any[]) {
 		// Temp directories should remain in the root filesystem for now
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processPath(path).mkdtemp(...args);
 	}
 
@@ -877,7 +876,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	futimes(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).futimes(fd, ...rest);
 	}
 
@@ -886,7 +885,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	fchown(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).fchown(fd, ...rest);
 	}
 
@@ -895,22 +894,22 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	fchmod(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).fchmod(fd, ...rest);
 	}
 
 	fsync(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).fsync(fd, ...rest);
 	}
 
 	write(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).write(fd, ...rest);
 	}
 
 	read(fd: AnuraFD, ...rest: any[]) {
-		// @ts-ignore - Overloaded methods are scary
+		// @ts-expect-error - Overloaded methods are scary
 		this.processFD(fd).read(fd, ...rest);
 	}
 

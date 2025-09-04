@@ -15,5 +15,5 @@ jobs:
                 node-version: 22
             - name: Install dependencies
               run: npm i
-            - name: Build TB React
+            - name: Build TB Solid
               run: npm run build-static

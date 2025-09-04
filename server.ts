@@ -1,4 +1,4 @@
-import express, { Response, Request } from "express";
+import express, { type Response, type Request } from "express";
 import { createServer } from "node:http";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -9,8 +9,8 @@ import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 // @ts-expect-error types
 import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
-import Socket from "ws";
-import Head from "ws";
+import type Socket from "ws";
+import type Head from "ws";
 import cors from "cors";
 import config from "dotenv";
 
@@ -25,9 +25,9 @@ export function TServer() {
 
 	const masqrCheck = process.env.MASQR && process.env.MASQR.toLowerCase() === "true";
 	if (masqrCheck) {
-		console.log(`Masqr is Enabled`);
+		console.log("Masqr is Enabled");
 	} else {
-		console.log(`Masqr is Disabled`);
+		console.log("Masqr is Disabled");
 	}
 
 	async function MasqFail(req, res) {
@@ -85,7 +85,7 @@ export function TServer() {
 			console.log(`\x1b[0m${process.env.LICENSE_SERVER_URL}${pass}&host=${req.headers.host} ` + `returned: ${licenseCheck}`);
 			if (licenseCheck == "License valid") {
 				res.cookie("authcheck", "true", { expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
-				res.send(`<script> window.location.href = window.location.href </script>`);
+				res.send("<script> window.location.href = window.location.href </script>");
 				return;
 			}
 			MasqFail(req, res);
@@ -120,7 +120,7 @@ export function TServer() {
 		}
 	});
 
-	const port = parseInt(process.env.PORT || "8080");
+	const port = Number.parseInt(process.env.PORT || "8080");
 	const corsOptions = {
 		origin: `http://localhost:${port}`,
 		methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
@@ -134,7 +134,7 @@ export function TServer() {
 		console.log(`
   \x1b[38;2;50;174;98m@@@@@@@@@@@@@@~ B@@@@@@@@#G?.
   \x1b[38;2;50;174;98mB###&@@@@&####^ #@@@&PPPB@@@G.
-  \x1b[38;2;50;174;98m .. ~@@@@J ..  .#@@@P   ~&@@@^      \x1b[38;2;60;195;240mWelcome to Terbium React v${version}
+  \x1b[38;2;50;174;98m .. ~@@@@J ..  .#@@@P   ~&@@@^      \x1b[38;2;60;195;240mWelcome to Terbium Solid v${version}
       \x1b[38;2;50;174;98m^@@@@?     .#@@@@###&@@&7
       \x1b[38;2;50;174;98m^@@@@?     .#@@@#555P&@@B7      \x1b[38;2;182;182;182mTerbium is running on ${port}
       \x1b[38;2;50;174;98m^@@@@?     .#@@@P    G@@@@      \x1b[38;2;182;182;182mAny problems you encounter let us know!

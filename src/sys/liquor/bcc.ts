@@ -18,15 +18,15 @@ export class AnuraBareClient {
 
 		const respheaders = {};
 
-		//@ts-ignore
+		//@ts-expect-error
 		if (payload.raw_headers)
 			for (const [key, value] of payload.raw_headers) {
-				//@ts-ignore
+				//@ts-expect-error
 				if (!respheaders[key]) {
-					//@ts-ignore
+					//@ts-expect-error
 					respheaders[key] = [value];
 				} else {
-					//@ts-ignore
+					//@ts-expect-error
 					respheaders[key].push(value);
 				}
 			}
@@ -49,7 +49,7 @@ export class AnuraBareClient {
 		onclose: (code: number, reason: string) => void,
 		onerror: (error: string) => void,
 	): [(data: Blob | ArrayBuffer | string) => void, (code: number, reason: string) => void] {
-		//@ts-ignore
+		//@ts-expect-error
 		const socket = new window.anura.net.WebSocket(url.toString(), protocols, {
 			headers: requestHeaders,
 		});

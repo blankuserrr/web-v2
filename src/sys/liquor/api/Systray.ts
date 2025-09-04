@@ -1,4 +1,4 @@
-import { useWindowStore } from "../../Store";
+import { windowStore } from "../../Store";
 
 export class SystrayIcon {
 	onclick = () => {};
@@ -17,7 +17,7 @@ export class SystrayIcon {
 export class Systray {
 	icon: SystrayIcon[] = [];
 	create = (args: any) => {
-		const win = useWindowStore().windows.find((win: any) => win.pid === window.tb.window.getId());
+		const win = windowStore.windows.find((win: any) => win.pid === window.tb.window.getId());
 		const title = win ? win.title : "Anura File Manager";
 		window.tb.window.island.addControl({
 			text: `${args.tooltip}`,

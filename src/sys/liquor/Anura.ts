@@ -5,12 +5,12 @@ import { ContextMenuAPI } from "./api/ContextMenuAPI";
 import { FilesAPI } from "./api/Files";
 import { NotificationService } from "./api/NotificationService";
 import { Settings } from "./api/Settings";
-import { App } from "./coreapps/App";
+import type { App } from "./coreapps/App";
 import { ExternalApp } from "./coreapps/ExternalApp";
 import { Networking } from "./api/Networking";
 import { URIHandlerAPI } from "./api/URIHandler";
 import { ExternalLib } from "./libs/ExternalLib";
-import { Lib } from "./libs/lib";
+import type { Lib } from "./libs/lib";
 import { Processes } from "./api/Process";
 import { Platform } from "./api/Platform";
 import { Dialog } from "./api/Dialog";
@@ -94,7 +94,7 @@ export class Anura {
 						this.fs.readFile(
 							"/system/lib/anura//" + file,
 							// @ts-expect-error
-							function (err: Error, data: Uint8Array) {
+							(err: Error, data: Uint8Array) => {
 								if (err) throw "Failed to read file";
 								try {
 									eval(new TextDecoder("utf-8").decode(data));

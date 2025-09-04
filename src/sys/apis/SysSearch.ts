@@ -1,4 +1,4 @@
-import { WindowConfig } from "../types";
+import type { WindowConfig } from "../types";
 import { fileStat, isFilePathString } from "./utils/file";
 
 type TSearchTerm = string | object | File | ArrayBuffer | Blob | null;
@@ -21,7 +21,7 @@ export const searchFiles = async (searchTerm: TSearchTerm): Promise<boolean | an
 		const fileExt = await fileStat.ext(filePath);
 
 		if (fileName.toLowerCase().includes(searchTermString.toLowerCase())) {
-			let result = {
+			const result = {
 				name: fileName,
 				ext: fileExt,
 				type: fileType,
@@ -37,9 +37,8 @@ export const searchFiles = async (searchTerm: TSearchTerm): Promise<boolean | an
 
 	if (searchResults.length > 0) {
 		return searchResults;
-	} else {
-		return false;
 	}
+	return false;
 };
 
 interface IAppName {
@@ -54,13 +53,13 @@ export const searchApps = async (searchTerm: TSearchTerm): Promise<boolean | { d
 	let searchTermString = typeof searchTerm === "string" ? searchTerm.toLowerCase() : JSON.stringify(searchTerm).toLowerCase();
 	if (searchTermString.endsWith(".tapp")) searchTermString = searchTermString.replace(".tapp", "");
 
-	let installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+	const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 	const searchResults: any[] = [];
 	for (const app of installed) {
 		if (app.name && app.name.toLowerCase().includes(searchTermString)) {
-			let cfg = JSON.parse(await Filer.fs.promises.readFile(app.config, "utf8"));
+			const cfg = JSON.parse(await Filer.fs.promises.readFile(app.config, "utf8"));
 			let icon: string | null = null;
-			let appDir = app.config.replace(/\/[^\/]+\.json$|\/[^\/]+\.tbconfig$/i, "");
+			const appDir = app.config.replace(/\/[^/]+\.json$|\/[^/]+\.tbconfig$/i, "");
 
 			try {
 				if (cfg.icon) {

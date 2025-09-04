@@ -15,7 +15,7 @@ setInterval(() => {
 const cat_options = document.querySelectorAll(".cat-option");
 cat_options.forEach(option => {
 	function mouseleave() {
-		let tooltip = option.querySelector(".cat-tooltip");
+		const tooltip = option.querySelector(".cat-tooltip");
 		tooltip.classList.add("hidden");
 		option.removeEventListener("mouseleave", mouseleave);
 		option.addEventListener("mouseover", mouseover);
@@ -24,7 +24,7 @@ cat_options.forEach(option => {
 		setTimeout(() => {
 			if (option.matches(":hover")) {
 				if (option.offsetWidth === 36) {
-					let tooltip = option.querySelector(".cat-tooltip");
+					const tooltip = option.querySelector(".cat-tooltip");
 					tooltip.classList.remove("hidden");
 					document.querySelectorAll(".cat-tooltip").forEach(tooltip => {
 						if (tooltip !== option.querySelector(".cat-tooltip")) tooltip.classList.add("hidden");
@@ -58,7 +58,7 @@ wallpaper_options.forEach(option => {
 		const parent_origin = parent.parent.window.location.origin;
 		const wallpaper = option.src.toString().split(parent_origin)[1];
 		const color = option.getAttribute("color-type");
-		let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 		data["wallpaper"] = wallpaper;
 		tb_wallpaper.set(wallpaper);
 		const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
@@ -76,7 +76,7 @@ Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "u
 	const fillMode = data["wallpaperMode"];
 	const showSeconds = data["times"]["showSeconds"];
 	const twentyFourHour = data["times"]["format"];
-	let fillModeCapitalized = fillMode.charAt(0).toUpperCase() + fillMode.slice(1);
+	const fillModeCapitalized = fillMode.charAt(0).toUpperCase() + fillMode.slice(1);
 	document.querySelector(`[action-for="wallpaper-fill"]`).querySelector(".select-title .text").innerText = fillModeCapitalized;
 	document.querySelector(`[action-for="proxy"]`).querySelector(".select-title .text").innerText = data["proxy"];
 	document.querySelector(`[action-for="transports"]`).querySelector(".select-title .text").innerText = data["transport"];
@@ -88,7 +88,7 @@ Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	const cords = data["location"];
-	document.querySelector(`.cords`).innerText = `${cords}`;
+	document.querySelector(".cords").innerText = `${cords}`;
 	const tempunit = data["weather"]["unit"];
 	document.querySelector(`[action-for="temperature-unit"]`).querySelector(".select-title .text").innerText = tempunit;
 });
@@ -118,7 +118,7 @@ const customWallpaper = () => {
 			delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
 			delete_button.classList.add("delete-wallpaper");
 			delete_button.addEventListener("click", async e => {
-				let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				if (data["wallpaper"] === path) {
 					tb_wallpaper.set("/assets/wallpapers/1.png");
 				}
@@ -176,8 +176,8 @@ async function getWispSrvs() {
 	const main = document.getElementById("wispSrvs");
 	window.parent.window.dispatchEvent(new Event("update-wispsrvs"));
 	const makeCard = async (name, id) => {
-		let settings = await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8");
-		let settdata = JSON.parse(settings);
+		const settings = await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8");
+		const settdata = JSON.parse(settings);
 
 		const card = document.createElement("div");
 		card.classList.add("flex", "justify-between", "w-full", "p-1.5", "rounded-lg", "duration-150");
@@ -205,7 +205,7 @@ async function getWispSrvs() {
 		card.innerHTML = html;
 		setTimeout(async () => {
 			const res = await ping(name);
-			document.querySelector(`[latency]`).innerHTML = res.latency + "ms";
+			document.querySelector("[latency]").innerHTML = res.latency + "ms";
 		}, 1750);
 
 		card.addEventListener("click", async () => {
@@ -259,7 +259,7 @@ async function getWispSrvs() {
 					title: "Enter the socket URL for the Wisp server",
 					onOk: async val => {
 						const ent = { id: val, name: sessionStorage.getItem("wispSrv") };
-						let data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+						const data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
 						data.push(ent);
 						Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
 						makeCard(val, sessionStorage.getItem("wispSrv"));
@@ -282,7 +282,7 @@ const accentMousedown = async () => {
 	const defaultAccent = "#32ae62";
 	accentPreview.classList.remove("group", "cursor-pointer");
 	accentPreview.style.setProperty("--accent", defaultAccent);
-	let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	settings["accent"] = defaultAccent;
 	Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 	accentPreview.removeEventListener("mousedown", accentMousedown);
@@ -317,11 +317,11 @@ custom_accent.addEventListener("click", e => {
 			const g = rgb[1];
 			const b = rgb[2];
 			color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			settings["accent"] = color;
 			Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 		} else {
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			settings["accent"] = color;
 			Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 		}
@@ -429,7 +429,7 @@ usernameEl.addEventListener("input", async e => {
 				await Filer.fs.promises.writeFile(`/apps/user/${usernameEl.value}/files/config.json`, JSON.stringify(fcfg));
 				const qcfg = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${usernameEl.value}/files/quick-center.json`, "utf8"));
 				for (const key in qcfg.paths) {
-					if (Object.prototype.hasOwnProperty.call(qcfg.paths, key)) {
+					if (Object.hasOwn(qcfg.paths, key)) {
 						qcfg.paths[key] = qcfg.paths[key].replace(sessionStorage.getItem("currAcc"), usernameEl.value);
 					}
 				}
@@ -549,7 +549,7 @@ saveCity.addEventListener("click", e => {
 		data = JSON.parse(data);
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
-				function (position) {
+				position => {
 					const latitude = position.coords.latitude;
 					const longitude = position.coords.longitude;
 					console.log(`${latitude},${longitude}`);
@@ -559,7 +559,7 @@ saveCity.addEventListener("click", e => {
 						if (err) return console.log(err);
 					});
 				},
-				function (error) {
+				error => {
 					console.error(`Error Occured: ${error.code}`);
 				},
 				{
@@ -587,7 +587,7 @@ accountsButton.addEventListener("mousedown", e => {
 
 const batteryPercentage = document.querySelector(".battery-percentage");
 (async () => {
-	let showBatteryPercentage = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["battery-percent"];
+	const showBatteryPercentage = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["battery-percent"];
 	const realCheckbox = batteryPercentage.querySelector("input[type='checkbox']");
 	if (showBatteryPercentage) {
 		realCheckbox.checked = true;
@@ -601,7 +601,7 @@ const batteryPercentage = document.querySelector(".battery-percentage");
 })();
 
 batteryPercentage.addEventListener("mousedown", async e => {
-	let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	const realCheckbox = batteryPercentage.querySelector("input[type='checkbox']");
 	realCheckbox.checked = !realCheckbox.checked;
 	const checkIcon = batteryPercentage.querySelector(".checkIcon");
@@ -637,11 +637,11 @@ showCords.addEventListener("mousedown", async e => {
 });
 
 async function exportSettings() {
-	let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-	let data = JSON.stringify(settings);
-	let blob = new Blob([data], { type: "application/json" });
-	let url = URL.createObjectURL(blob);
-	let a = document.createElement("a");
+	const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	const data = JSON.stringify(settings);
+	const blob = new Blob([data], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
 	a.href = url;
 	a.download = "settings.json";
 	a.click();
@@ -652,12 +652,12 @@ async function convertTBSIF() {
 	input.type = "file";
 	input.accept = ".tbs";
 	input.onchange = async () => {
-		let file = input.files[0];
-		let reader = new FileReader();
+		const file = input.files[0];
+		const reader = new FileReader();
 		reader.onload = async () => {
-			let tbs_config = reader.result;
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-			let syssettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			const tbs_config = reader.result;
+			const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			const syssettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			if (tbs_config.theme && tbs_config.theme !== "default") {
 				syssettings.theme = tbs_config.theme;
 			}

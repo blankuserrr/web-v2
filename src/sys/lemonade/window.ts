@@ -1,4 +1,4 @@
-import { UserSettings } from "../types";
+import type { UserSettings } from "../types";
 
 interface ElectronWinArgs {
 	width?: number;

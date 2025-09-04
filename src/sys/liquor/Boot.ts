@@ -13,7 +13,7 @@ channel.addEventListener("message", msg => {
 
 	if (msg.data === "blackmanthunderstorm") {
 		activetab = false;
-		//@ts-ignore
+		//@ts-expect-error
 		for (const elm of [...document.children]) {
 			elm.remove();
 		}
@@ -149,7 +149,7 @@ document.addEventListener("anura-login-completed", async () => {
 					anura.fs.readFile(
 						"/userInit/" + file,
 						// @ts-expect-error
-						function (err: Error, data: Uint8Array) {
+						(err: Error, data: Uint8Array) => {
 							if (err) throw "Failed to read file";
 							try {
 								eval(new TextDecoder("utf-8").decode(data));
@@ -175,7 +175,7 @@ document.addEventListener("anura-login-completed", async () => {
 		});
 	}
 
-	document.addEventListener("contextmenu", function (e) {
+	document.addEventListener("contextmenu", e => {
 		if (e.shiftKey) return;
 		e.preventDefault();
 		//     const menu: any = document.querySelector(".custom-menu");

@@ -1,4 +1,4 @@
-let format: string = "12h";
+let format = "12h";
 let internet: boolean;
 let showSeconds: boolean;
 const getTime = () => {
@@ -18,7 +18,7 @@ const getTime = () => {
 	let hours: any;
 	let minutes: any;
 	let seconds: any;
-	let time: string = "";
+	let time = "";
 	if (format === "24h") {
 		hours = date.getHours();
 	} else if (format === "12h") {

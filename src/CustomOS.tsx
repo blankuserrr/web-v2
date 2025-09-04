@@ -1,16 +1,24 @@
-import { useEffect, useState } from "react";
+import { type Component, createEffect, createSignal, onMount } from "solid-js";
 
-export default function CustomOS() {
-	const [loaded, setloaded] = useState(false);
+const CustomOS: Component = () => {
+	const [loaded, setloaded] = createSignal(false);
 
-	useEffect(() => {
+	onMount(() => {
+		const bootfile = sessionStorage.getItem("bootfile");
+		if (!bootfile) {
+			console.error("No bootfile found in session storage.");
+			sessionStorage.clear();
+			window.location.reload();
+			return;
+		}
+
 		const rep = (content: string) => {
 			const parser = new DOMParser();
 			const doc = parser.parseFromString(content, "text/html");
-			console.log(`Terbium Bootloader v2.0.0 RC-1 is now loading: ${sessionStorage.getItem("bootfile")}`);
+			console.log(`Terbium Bootloader v2.0.0 RC-1 is now loading: ${bootfile}`);
 			if (doc.body && doc.head) {
 				const b = document.createElement("base");
-				b.href = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}/`;
+				b.href = `/fs/${bootfile.replace(/\/?[^/]+\.html$/, "")}/`;
 				doc.head.insertBefore(b, doc.head.firstChild);
 				document.body.innerHTML = doc.body.innerHTML;
 				document.head.innerHTML = doc.head.innerHTML;
@@ -21,7 +29,7 @@ export default function CustomOS() {
 						if (script.src.includes("http")) {
 							newScript.src = script.src;
 						} else if (!script.src.includes(`${window.location.origin}/fs/`)) {
-							newScript.src = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
+							newScript.src = `/fs/${bootfile.replace(/\/?[^/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
 						} else {
 							newScript.src = script.src;
 						}
@@ -33,14 +41,14 @@ export default function CustomOS() {
 				});
 				setloaded(true);
 			} else {
-				console.error(`Failed to boot: ${sessionStorage.getItem("bootfile")}`);
+				console.error(`Failed to boot: ${bootfile}`);
 				sessionStorage.clear();
 				window.location.reload();
 			}
 		};
 
 		Filer.fs.promises
-			.readFile(sessionStorage.getItem("bootfile")!, "utf8")
+			.readFile(bootfile, "utf8")
 			.then(data => {
 				rep(data);
 			})
@@ -49,9 +57,9 @@ export default function CustomOS() {
 				sessionStorage.clear();
 				window.location.reload();
 			});
-	}, []);
+	});
 
-	useEffect(() => {
+	createEffect(() => {
 		const back = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				sessionStorage.clear();
@@ -59,7 +67,7 @@ export default function CustomOS() {
 			}
 		};
 
-		if (loaded) {
+		if (loaded()) {
 			window.removeEventListener("keydown", back);
 		} else {
 			window.addEventListener("keydown", back);
@@ -68,16 +76,16 @@ export default function CustomOS() {
 		return () => {
 			window.removeEventListener("keydown", back);
 		};
-	}, [loaded]);
+	});
 
 	return (
-		<div className="bg-[#0e0e0e] h-full justify-center items-center flex flex-col lg:h-full md:h-full">
-			<img src="/tb.svg" alt="Terbium" className="w-[25%] h-[25%]" />
-			<div className="duration-150 flex flex-col justify-center items-center">
-				<div className="text-container relative flex flex-col justify-center items-end">
-					<div className="bg-linear-to-b from-[#ffffff] to-[#ffffff77] text-transparent bg-clip-text flex flex-col lg:items-center md:items-center sm:items-center">
-						<span className="font-[700] lg:text-[34px] md:text-[28px] sm:text-[22px] text-right duration-150">
-							<span className="font-[1000] duration-150">Terbium Bootloader</span>
+		<div class="bg-[#0e0e0e] h-full justify-center items-center flex flex-col lg:h-full md:h-full">
+			<img src="/tb.svg" alt="Terbium" class="w-[25%] h-[25%]" />
+			<div class="duration-150 flex flex-col justify-center items-center">
+				<div class="text-container relative flex flex-col justify-center items-end">
+					<div class="bg-linear-to-b from-[#ffffff] to-[#ffffff77] text-transparent bg-clip-text flex flex-col lg:items-center md:items-center sm:items-center">
+						<span class="font-[700] lg:text-[34px] md:text-[28px] sm:text-[22px] text-right duration-150">
+							<span class="font-[1000] duration-150">Terbium Bootloader</span>
 						</span>
 						<br />
 						<p>Press ESC to return to boot menu</p>
@@ -86,4 +94,6 @@ export default function CustomOS() {
 			</div>
 		</div>
 	);
-}
+};
+
+export default CustomOS;

@@ -1,5 +1,5 @@
 async function pkg(args) {
-	let availableCommands = [
+	const availableCommands = [
 		"pkg <command> -h: Display help for <command>.",
 		"pkg install <package-name>: Install an app matching <package-name> from the repo.",
 		"pkg remove <package-name>: Uninstall an app matching <package-name> from the repo.",
@@ -30,7 +30,7 @@ async function pkg(args) {
 						displayOutput(`The app "${exactMatch.name}" is already installed.`);
 						displayOutput("Do you want to reinstall it? (y/n)");
 						term.write("\r\n> ");
-						const onData = async function (input) {
+						const onData = async input => {
 							const userInput = input.trim().toLowerCase();
 							if (userInput === "y") {
 								displayOutput("");
@@ -45,26 +45,23 @@ async function pkg(args) {
 						};
 						const disposable = term.onData(onData);
 						return;
-					} else {
-						await installApp(exactMatch, type, installed);
-						displayOutput(`${exactMatch.name} installed successfully!`);
-						createNewCommandInput();
-						return;
 					}
-				} else {
-					displayOutput(`No package found with the name "${packageName}".`);
+					await installApp(exactMatch, type, installed);
+					displayOutput(`${exactMatch.name} installed successfully!`);
 					createNewCommandInput();
 					return;
 				}
-			} else {
-				displayOutput("Usage: pkg install <package-name>");
+				displayOutput(`No package found with the name "${packageName}".`);
 				createNewCommandInput();
 				return;
 			}
+			displayOutput("Usage: pkg install <package-name>");
+			createNewCommandInput();
+			return;
 		case "remove":
 			if (args._[1]) {
 				const packageName = args._[1];
-				let installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+				const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 				const appIndex = installed.findIndex(app => app.name.toLowerCase() === packageName);
 				if (appIndex !== -1) {
 					const app = installed[appIndex];
@@ -74,7 +71,7 @@ async function pkg(args) {
 					const configPath = app.config;
 					console.log(configPath);
 					if (configPath.endsWith("index.json")) {
-						let webApps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+						const webApps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 						const waIndex = webApps.findIndex(webApp => webApp.name.toLowerCase() === app.name.toLowerCase());
 						if (waIndex !== -1) {
 							webApps.splice(waIndex, 1);
@@ -122,7 +119,7 @@ async function pkg(args) {
 				return;
 			}
 			break;
-		case "list":
+		case "list": {
 			displayOutput("Installed Packages for this system:");
 			const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 			for (const app of installed) {
@@ -132,6 +129,7 @@ async function pkg(args) {
 			displayOutput(`${installed.length} are installed.`);
 			createNewCommandInput();
 			break;
+		}
 		case "search":
 			if (args._[1]) {
 				const response = await tb.libcurl.fetch(localStorage.getItem("appRepo") || "https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json");
@@ -181,13 +179,13 @@ async function pkg(args) {
 			break;
 		case "help":
 		default:
-			displayOutput(`TPKG v1.4.0 - June 2025`);
-			displayOutput(`Usage: pkg <command>`);
+			displayOutput("TPKG v1.4.0 - June 2025");
+			displayOutput("Usage: pkg <command>");
 			displayOutput(" ");
 			displayOutput("All commands:");
 			for (let command in availableCommands) {
 				command = availableCommands[command];
-				let [cmd, description] = command.split(": ");
+				const [cmd, description] = command.split(": ");
 				displayOutput(`   ${cmd.padEnd(40)} ${description}`);
 			}
 			createNewCommandInput();
@@ -197,9 +195,9 @@ async function pkg(args) {
 
 async function installApp(app, type) {
 	switch (type) {
-		case "web":
-			let appPath = `/apps/user/${await window.parent.tb.user.username()}/${app.name}`;
-			let appIndex = {
+		case "web": {
+			const appPath = `/apps/user/${await window.parent.tb.user.username()}/${app.name}`;
+			const appIndex = {
 				name: app.name,
 				icon: app.icon,
 				description: app.description,
@@ -213,7 +211,7 @@ async function installApp(app, type) {
 				await Filer.fs.promises.mkdir(appPath);
 			}
 			await Filer.fs.promises.writeFile(`${appPath}/index.json`, JSON.stringify(appIndex));
-			let apps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+			const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 			apps["apps"].push(app["pkg-name"]);
 			await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(apps));
 			await window.parent.tb.launcher.addApp({
@@ -233,16 +231,16 @@ async function installApp(app, type) {
 				snapable: app["wmArgs"]["snapable"],
 			});
 			try {
-				let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 				apps.push({
 					name: app.name,
 					user: await window.parent.tb.user.username(),
 					config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
 				});
-				await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+				await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 			} catch {
 				await Filer.fs.promises.writeFile(
-					`/apps/installed.json`,
+					"/apps/installed.json",
 					JSON.stringify([
 						{
 							name: app.name,
@@ -253,7 +251,8 @@ async function installApp(app, type) {
 				);
 			}
 			break;
-		case "TAPP":
+		}
+		case "TAPP": {
 			const appName = app.name.toLowerCase();
 			const DLPath = `/apps/${appName}`;
 			const downloadUrl = app["pkg-download"];
@@ -287,16 +286,16 @@ async function installApp(app, type) {
 				});
 				await Filer.fs.promises.unlink(`${DLPath}.zip`);
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: appName,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/system/${appName}.tapp/.tbconfig`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await Filer.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify({
 							name: appName,
 							user: await window.parent.tb.user.username(),
@@ -309,7 +308,8 @@ async function installApp(app, type) {
 				return;
 			}
 			break;
-		case "anura":
+		}
+		case "anura": {
 			const aName = app.name.toLowerCase();
 			const APath = `/apps/anura/${appName}`;
 			const aDL = app["anura-pkg"];
@@ -337,16 +337,16 @@ async function installApp(app, type) {
 				};
 				await Filer.fs.promises.unlink(`${APath}.zip`);
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: appData.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/anura/${appName}/manifest.json`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await Filer.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify([
 							{
 								name: appData.name,
@@ -361,6 +361,7 @@ async function installApp(app, type) {
 				return;
 			}
 			break;
+		}
 	}
 }
 

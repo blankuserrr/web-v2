@@ -43,7 +43,7 @@ selects.forEach(select => {
 							case "no":
 								Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 									if (err) return console.log(err);
-									let settings = JSON.parse(data);
+									const settings = JSON.parse(data);
 									settings["times"]["showSeconds"] = false;
 									Filer.fs.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, JSON.stringify(settings));
 								});
@@ -51,7 +51,7 @@ selects.forEach(select => {
 							case "yes":
 								Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 									if (err) return console.log(err);
-									let settings = JSON.parse(data);
+									const settings = JSON.parse(data);
 									settings["times"]["showSeconds"] = true;
 									Filer.fs.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, JSON.stringify(settings));
 								});
@@ -62,7 +62,7 @@ selects.forEach(select => {
 							case "no":
 								Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 									if (err) return console.log(err);
-									let settings = JSON.parse(data);
+									const settings = JSON.parse(data);
 									settings["times"]["format"] = "12h";
 									Filer.fs.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, JSON.stringify(settings));
 								});
@@ -70,7 +70,7 @@ selects.forEach(select => {
 							case "yes":
 								Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 									if (err) return console.log(err);
-									let settings = JSON.parse(data);
+									const settings = JSON.parse(data);
 									settings["times"]["format"] = "24h";
 									Filer.fs.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, JSON.stringify(settings));
 								});
@@ -79,14 +79,14 @@ selects.forEach(select => {
 					} else if (select.getAttribute("action-for") === "location-state") {
 						Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 							if (err) return console.log(err);
-							let settings = JSON.parse(data);
+							const settings = JSON.parse(data);
 							settings["location"]["state"] = option.getAttribute("value");
 							Filer.fs.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings));
 						});
 					} else if (select.getAttribute("action-for") === "temperature-unit") {
 						Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 							if (err) return console.log(err);
-							let settings = JSON.parse(data);
+							const settings = JSON.parse(data);
 							settings["weather"]["unit"] = option.getAttribute("value");
 							Filer.fs.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings));
 							window.parent.dispatchEvent(new Event("updWeather"));

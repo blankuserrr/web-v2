@@ -1,10 +1,7 @@
-import parser from "yargs-parser";
-import http from "iso-http";
-import git from "git";
+import parser from "https://unpkg.com/yargs-parser@22.0.0/browser.js";
+import http from "/assets/libs/http.min.js";
+import git from "https://cdn.jsdelivr.net/npm/isomorphic-git@1.30.1/+esm";
 
-/**
- * @typedef {import("yargs-parser").Arguments} argv
- */
 /**
  * @typedef {function(string, argv)} commandHandler
  */
@@ -35,7 +32,7 @@ function htorgb(hex) {
 			.join("");
 	}
 	if (hex.length !== 6) return null;
-	const bigint = parseInt(hex, 16);
+	const bigint = Number.parseInt(hex, 16);
 	return {
 		r: (bigint >> 16) & 255,
 		g: (bigint >> 8) & 255,

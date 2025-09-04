@@ -6,7 +6,7 @@ function useSec(timeStr) {
 }
 
 function getBg(style) {
-	const match = /url\(['"]?([^'"\)]+)['"]?\)/.exec(style);
+	const match = /url\(['"]?([^'")]+)['"]?\)/.exec(style);
 	return match ? match[1] : null;
 }
 

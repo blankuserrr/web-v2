@@ -16,7 +16,7 @@ export type WindowInformation = {
 };
 
 export const AliceWM = {
-	create: async function (givenWinInfo: string | WindowInformation) {
+	create: async (givenWinInfo: string | WindowInformation) => {
 		console.trace();
 		// Default param
 		let wininfo: WindowInformation = {

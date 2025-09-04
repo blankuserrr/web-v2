@@ -5,16 +5,16 @@ window.addEventListener("load", async () => {
 });
 
 async function openFile(url, ext) {
-	let exts = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+	const exts = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 	if (exts["animated"].includes(ext)) {
-		let imgObj = new Image();
+		const imgObj = new Image();
 		imgObj.src = url;
 		imgObj.setAttribute("draggable", false);
 		document.querySelector(".media").innerHTML = "";
 		document.querySelector(".media").appendChild(imgObj);
 		let scale = 1;
 
-		window.addEventListener("wheel", function (e) {
+		window.addEventListener("wheel", e => {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -33,16 +33,16 @@ async function openFile(url, ext) {
 			imgObj.style.transform = `scale(${scale})`;
 		});
 	} else if (exts["image"].includes(ext)) {
-		let canvas = document.createElement("canvas");
-		let ctx = canvas.getContext("2d");
+		const canvas = document.createElement("canvas");
+		const ctx = canvas.getContext("2d");
 		document.querySelector(".media").innerHTML = "";
 		document.querySelector(".media").appendChild(canvas);
 		let isDragging = false;
 		let isMouseDown = false;
 		let startCoords = { x: 0, y: 0 };
-		let offset = { x: 0, y: 0 };
+		const offset = { x: 0, y: 0 };
 		let scale = 0.5;
-		let imgObj = new Image();
+		const imgObj = new Image();
 		imgObj.src = url;
 		imgObj.onload = () => {
 			initializeCanvas();
@@ -54,22 +54,22 @@ async function openFile(url, ext) {
 			drawImageWithOffsetAndScale();
 		}
 
-		window.addEventListener("resize", function () {
+		window.addEventListener("resize", () => {
 			initializeCanvas();
 		});
 
-		canvas.addEventListener("mousedown", function (e) {
+		canvas.addEventListener("mousedown", e => {
 			isDragging = true;
 			isMouseDown = true;
 			startCoords = { x: e.clientX, y: e.clientY };
 		});
 
-		window.addEventListener("mouseup", function () {
+		window.addEventListener("mouseup", () => {
 			isDragging = false;
 			isMouseDown = false;
 		});
 
-		canvas.addEventListener("mousemove", function (e) {
+		canvas.addEventListener("mousemove", e => {
 			if (isDragging) {
 				const deltaX = e.clientX - startCoords.x;
 				const deltaY = e.clientY - startCoords.y;
@@ -112,7 +112,7 @@ async function openFile(url, ext) {
 			}
 		});
 
-		canvas.addEventListener("wheel", function (e) {
+		canvas.addEventListener("wheel", e => {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -151,7 +151,7 @@ async function openFile(url, ext) {
 		};
 		await page.render(renderContext).promise;
 
-		window.addEventListener("wheel", function (e) {
+		window.addEventListener("wheel", e => {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -170,7 +170,7 @@ async function openFile(url, ext) {
 			canvas.style.transform = `scale(${scale})`;
 		});
 	} else if (exts["video"].includes(ext)) {
-		let videoElem = document.createElement("video");
+		const videoElem = document.createElement("video");
 		videoElem.src = url;
 		videoElem.controls = true;
 		videoElem.style.width = "75%";
@@ -180,7 +180,7 @@ async function openFile(url, ext) {
 		videoElem.play();
 		let scale = 1;
 
-		window.addEventListener("wheel", function (e) {
+		window.addEventListener("wheel", e => {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -199,7 +199,7 @@ async function openFile(url, ext) {
 			videoElem.style.transform = `scale(${scale})`;
 		});
 	} else if (exts["audio"].includes(ext)) {
-		let audioElem = document.createElement("audio");
+		const audioElem = document.createElement("audio");
 		audioElem.src = url;
 		audioElem.controls = true;
 		document.querySelector(".media").innerHTML = "";
@@ -250,7 +250,7 @@ async function openFile(url, ext) {
 			}
 		});
 
-		window.addEventListener("wheel", function (e) {
+		window.addEventListener("wheel", e => {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -285,33 +285,33 @@ window.addEventListener("message", async e => {
 			title: "Open a file",
 			onOk: async file => {
 				const ext = file.split(".").pop();
-				let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+				const json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 				if (file.includes("http")) {
 					openFile(file, ext);
 				} else if (json["image"].includes(ext)) {
-					let img = await Filer.fs.promises.readFile(file);
-					let blob = new Blob([img], { type: "image/" + ext });
-					let url = URL.createObjectURL(blob);
+					const img = await Filer.fs.promises.readFile(file);
+					const blob = new Blob([img], { type: "image/" + ext });
+					const url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["animated"].includes(ext)) {
-					let img = await Filer.fs.promises.readFile(file);
-					let blob = new Blob([img], { type: "image/" + ext });
-					let url = URL.createObjectURL(blob);
+					const img = await Filer.fs.promises.readFile(file);
+					const blob = new Blob([img], { type: "image/" + ext });
+					const url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["pdf"].includes(ext)) {
-					let pdf = await Filer.fs.promises.readFile(file);
-					let blob = new Blob([pdf], { type: "application/pdf" });
-					let url = URL.createObjectURL(blob);
+					const pdf = await Filer.fs.promises.readFile(file);
+					const blob = new Blob([pdf], { type: "application/pdf" });
+					const url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["video"].includes(ext)) {
-					let video = await Filer.fs.promises.readFile(file);
-					let blob = new Blob([video], { type: "video/" + ext });
-					let url = URL.createObjectURL(blob);
+					const video = await Filer.fs.promises.readFile(file);
+					const blob = new Blob([video], { type: "video/" + ext });
+					const url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["audio"].includes(ext)) {
-					let audio = await Filer.fs.promises.readFile(file);
-					let blob = new Blob([audio], { type: "audio/" + ext });
-					let url = URL.createObjectURL(blob);
+					const audio = await Filer.fs.promises.readFile(file);
+					const blob = new Blob([audio], { type: "audio/" + ext });
+					const url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				}
 			},
@@ -321,33 +321,33 @@ window.addEventListener("message", async e => {
 		asked = false;
 		if (data.path) {
 			const ext = data.path.split(".").pop();
-			let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+			const json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 			if (data.path.includes("http")) {
 				openFile(data.path, ext);
 			} else if (json["image"].includes(ext)) {
-				let img = await Filer.fs.promises.readFile(data.path);
-				let blob = new Blob([img], { type: "image/" + ext });
-				let url = URL.createObjectURL(blob);
+				const img = await Filer.fs.promises.readFile(data.path);
+				const blob = new Blob([img], { type: "image/" + ext });
+				const url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["animated"].includes(ext)) {
-				let img = await Filer.fs.promises.readFile(data.path);
-				let blob = new Blob([img], { type: "image/" + ext });
-				let url = URL.createObjectURL(blob);
+				const img = await Filer.fs.promises.readFile(data.path);
+				const blob = new Blob([img], { type: "image/" + ext });
+				const url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["pdf"].includes(ext)) {
-				let pdf = await Filer.fs.promises.readFile(data.path);
-				let blob = new Blob([pdf], { type: "application/pdf" });
-				let url = URL.createObjectURL(blob);
+				const pdf = await Filer.fs.promises.readFile(data.path);
+				const blob = new Blob([pdf], { type: "application/pdf" });
+				const url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["video"].includes(ext)) {
-				let video = await Filer.fs.promises.readFile(data.path);
-				let blob = new Blob([video], { type: "video/" + ext });
-				let url = URL.createObjectURL(blob);
+				const video = await Filer.fs.promises.readFile(data.path);
+				const blob = new Blob([video], { type: "video/" + ext });
+				const url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["audio"].includes(ext)) {
-				let audio = await Filer.fs.promises.readFile(data.path);
-				let blob = new Blob([audio], { type: "audio/" + ext });
-				let url = URL.createObjectURL(blob);
+				const audio = await Filer.fs.promises.readFile(data.path);
+				const blob = new Blob([audio], { type: "audio/" + ext });
+				const url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			}
 		}

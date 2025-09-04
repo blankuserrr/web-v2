@@ -1,11 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { type Component, createSignal, onMount } from "solid-js";
+import hashData from "./hash.json";
 import { dirExists, fileExists } from "./sys/types";
-import { hash } from "./hash.json";
+
+const hash = (hashData as { hash: string }).hash;
+
 import paths from "./installer.json";
 
-export default function Updater() {
-	const [progress, setProgress] = useState(0);
-	const statusref = useRef<HTMLDivElement>(null);
+const Updater: Component = () => {
+	const [progress, setProgress] = createSignal(0);
+	let statusref!: HTMLParagraphElement;
 
 	async function copyDir(inp: string, dest: string, rn?: boolean) {
 		if (rn === true) {
@@ -23,23 +26,23 @@ export default function Updater() {
 			} else {
 				await Filer.fs.promises.writeFile(`${dest}/${file}`, await Filer.fs.promises.readFile(`${inp}/${file}`, "utf8"));
 			}
-			statusref.current!.innerText = `Creating a copy of: ${file}...`;
+			statusref.innerText = `Creating a copy of: ${file}...`;
 			setProgress(Math.floor(((index + 1) / totalFiles) * 100));
 		}
 	}
 
-	useEffect(() => {
+	onMount(() => {
 		const main = async () => {
-			let sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
+			const sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
 			if (await dirExists("/system/tmp/terb-upd/")) {
 				// @ts-expect-error
-				await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+				await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
 			}
-			statusref.current!.innerText = "Installing latest version of TB...";
+			statusref.innerText = "Installing latest version of TB...";
 			await Filer.fs.promises.mkdir("/system/tmp/terb-upd/");
 			const apps = await Filer.fs.promises.readdir("/apps/system/");
 			setProgress(20);
-			statusref.current!.innerText = "Creating a backup";
+			statusref.innerText = "Creating a backup";
 			if (await fileExists("/apps/system/settings.tapp/wisp-servers.json")) {
 				await Filer.fs.promises.writeFile("/system/tmp/terb-upd/wisp-servers.json", await Filer.fs.promises.readFile("/apps/system/settings.tapp/wisp-servers.json"));
 			} else {
@@ -60,11 +63,11 @@ export default function Updater() {
 				}
 			}
 			setProgress(50);
-			statusref.current!.innerText = "Updating Terbium...";
+			statusref.innerText = "Updating Terbium...";
 			setProgress(0);
-			for (const item of paths) {
+			for (const item of paths as string[]) {
 				setProgress(prevProgress => prevProgress + 1);
-				statusref.current!.innerText = `Installing ${item}...`;
+				statusref.innerText = `Installing ${item}...`;
 				const isDir = item.toString().endsWith("/");
 				if (isDir) {
 					try {
@@ -94,8 +97,8 @@ export default function Updater() {
 			const user = sessionStorage.getItem("currAcc") || JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser;
 			// v2.0-Beta2 update
 			if (!(await fileExists("/apps/installed.json"))) {
-				statusref.current!.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
-				let insapps = [
+				statusref.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
+				const insapps = [
 					{
 						name: "About",
 						config: "/apps/system/about.tapp/index.json",
@@ -206,37 +209,39 @@ export default function Updater() {
 				await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
 			}
 			setProgress(80);
-			statusref.current!.innerText = "Cleaning up...";
+			statusref.innerText = "Cleaning up...";
 			setProgress(95);
 			// @ts-expect-error
-			await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+			await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
 			setProgress(100);
-			statusref.current!.innerText = "Restarting...";
+			statusref.innerText = "Restarting...";
 			window.location.reload();
 		};
 		main();
-	}, []);
+	});
 
 	return (
-		<div className="bg-[#0e0e0e] h-full justify-center items-center flex flex-col lg:h-full md:h-full">
-			<img src="/tb.svg" alt="Terbium" className="w-[25%] h-[25%]" />
-			<div className="duration-150 flex flex-col justify-center items-center">
-				<div className="text-container relative flex flex-col justify-center items-end">
-					<div className="bg-linear-to-b from-[#ffffff] to-[#ffffff77] text-transparent bg-clip-text flex flex-col lg:items-center md:items-center sm:items-center">
-						<span className="font-[700] lg:text-[34px] md:text-[28px] sm:text-[22px] text-right duration-150">
-							<span className="font-[1000] duration-150">Terbium is updating</span>
+		<div class="bg-[#0e0e0e] h-full justify-center items-center flex flex-col lg:h-full md:h-full">
+			<img src="/tb.svg" alt="Terbium" class="w-[25%] h-[25%]" />
+			<div class="duration-150 flex flex-col justify-center items-center">
+				<div class="text-container relative flex flex-col justify-center items-end">
+					<div class="bg-linear-to-b from-[#ffffff] to-[#ffffff77] text-transparent bg-clip-text flex flex-col lg:items-center md:items-center sm:items-center">
+						<span class="font-[700] lg:text-[34px] md:text-[28px] sm:text-[22px] text-right duration-150">
+							<span class="font-[1000] duration-150">Terbium is updating</span>
 						</span>
 						<br />
 						<p>Please DO NOT close this tab</p>
 					</div>
 				</div>
 			</div>
-			<p ref={statusref} className="mt-1">
+			<p ref={statusref} class="mt-1">
 				Downloading Updates...
 			</p>
-			<div className="relative flex w-[30%] h-3 rounded-full bg-[#00000020] overflow-hidden mt-4">
-				<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress}%` }}></div>
+			<div class="relative flex w-[30%] h-3 rounded-full bg-[#00000020] overflow-hidden mt-4">
+				<div class="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress()}%` }} />
 			</div>
 		</div>
 	);
-}
+};
+
+export default Updater;

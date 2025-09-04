@@ -11,7 +11,7 @@ tb_island.addControl({
 	appname: "Files",
 	id: "files_file",
 	click: () => {
-		let isTrash = document.querySelector(".exp").getAttribute("path") === "/home/trash" ? true : false;
+		const isTrash = document.querySelector(".exp").getAttribute("path") === "/home/trash" ? true : false;
 		tb.contextmenu.create({
 			x: 6,
 			y: appIsland.clientHeight + 12,
@@ -38,7 +38,7 @@ tb_island.addControl({
 															await createFile(path, ask);
 														}
 													} else {
-														let sh = new Filer.fs.Shell();
+														const sh = new Filer.fs.Shell();
 														await sh.touch(`${path}/${fileName}`, "");
 														openPath(path);
 													}

@@ -1,4 +1,4 @@
-import { Anura } from "../Anura";
+import type { Anura } from "../Anura";
 let anura: Anura;
 
 interface LibURIHandler {

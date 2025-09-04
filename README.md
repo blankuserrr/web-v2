@@ -6,7 +6,7 @@
 ## <span style="color: #32ae62;">Some of the technologies used</span>
 
 - [Vite](https://vite.dev)
-- [React](https://react.dev)
+- [SolidJS](https://www.solidjs.com/)
 - [TailwindCSS](https://tailwindcss.com)
 - [FilerJS](https://github.com/filerjs/filer)
 - [Fflate](https://github.com/101arrowz/fflate/)

@@ -1,5 +1,4 @@
 /**
- * @typedef {import("yargs-parser").Arguments} argv
  * @typedef {import("xterm").Terminal} Terminal
  */
 
@@ -21,7 +20,7 @@ async function node(args, term) {
 	let commandArgs;
 
 	if (tb.node.isReady === false) {
-		displayOutput(`\r\nWebContainer has not booted yet. Please wait a few seconds and try again.`);
+		displayOutput("\r\nWebContainer has not booted yet. Please wait a few seconds and try again.");
 		createNewCommandInput();
 		tb.setCommandProcessing(true);
 		return;

@@ -1,19 +1,19 @@
 async function git(args) {
-	let user = await window.parent.tb.user.username();
+	const user = await window.parent.tb.user.username();
 	let currentPath = path;
 	if (currentPath.startsWith("~")) currentPath = currentPath.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
-	let cmds = [
-		"\ start a working area",
+	const cmds = [
+		" start a working area",
 		"clone: Clone a repository into a new directory",
 		"init: Create an empty Git repository or reinitialize an existing one",
-		"\ work on the current change",
+		" work on the current change",
 		"add: Add file contents to the index",
 		"rm: Remove files from the working tree and from the index",
-		"\ examine the history and state",
+		" examine the history and state",
 		"status: Show the working tree status",
-		"\ grow, mark and tweak your common history",
+		" grow, mark and tweak your common history",
 		"commit: Record changes to the repository (Make sure to run git add <filename> <directory> before commiting)",
-		"\ collaborate (Login requires your GitHub Token)",
+		" collaborate (Login requires your GitHub Token)",
 		"fetch: Download objects and refs from another repository",
 		"pull: Fetch from and integrate with another repository or a local branch",
 		"push: Update remote refs along with associated objects",
@@ -68,7 +68,7 @@ async function git(args) {
 			});
 			createNewCommandInput();
 		} else if (args._raw.includes("init")) {
-			let path = currentPath + args._[1];
+			const path = currentPath + args._[1];
 			if (!args._raw[1]) {
 				displayError("Error: Target directory must be specified for 'git init'.");
 				createNewCommandInput();
@@ -280,16 +280,16 @@ async function git(args) {
 			createNewCommandInput();
 		} else {
 			displayOutput("Usage: git [--version] [--help] <command> [<args>]"), displayOutput("These are common Git commands used in various situations:");
-			for (let command of cmds) {
+			for (const command of cmds) {
 				if (command.trim() === "") {
 					displayOutput("");
 					continue;
 				}
-				if (command.startsWith("\ ")) {
+				if (command.startsWith(" ")) {
 					displayOutput(command.slice(1));
 					continue;
 				}
-				let [cmd, description] = command.split(": ");
+				const [cmd, description] = command.split(": ");
 				displayOutput(`   ${cmd.padEnd(15)} ${description}`);
 			}
 			createNewCommandInput();

@@ -1,4 +1,4 @@
-import { Anura } from "../Anura";
+import type { Anura } from "../Anura";
 
 // Depends on Settings.ts, must be loaded AFTER
 let anura: Anura;

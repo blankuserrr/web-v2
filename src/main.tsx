@@ -1,25 +1,29 @@
-import { StrictMode, useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import { type Component, createSignal, onMount } from "solid-js";
+import { Dynamic, render } from "solid-js/web";
+import App from "./App";
+import Boot from "./Boot";
+import CustomOS from "./CustomOS";
+import hashData from "./hash.json";
 import "./index.css";
-import Setup from "./Setup.tsx";
-import Login from "./Login.tsx";
-import Boot from "./Boot.tsx";
-import CustomOS from "./CustomOS.tsx";
-import Updater from "./Updater.tsx";
-import { hash } from "./hash.json";
-import { fileExists } from "./sys/types.ts";
-import Loader from "./Loading.tsx";
-import Recovery from "./Recovery.tsx";
-import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import Login from "./Login";
+import Setup from "./Setup";
+import Updater from "./Updater";
 
-const Root = () => {
-	const [currPag, setPag] = useState(<Loader />);
+const hash = (hashData as { hash: string }).hash;
+
+import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import Loader from "./Loading";
+import Recovery from "./Recovery";
+import { fileExists } from "./sys/types";
+
+const Root: Component = () => {
+	const [currPag, setPag] = createSignal<Component>(Loader);
 	const params = new URLSearchParams(window.location.search);
-	useEffect(() => {
+
+	onMount(async () => {
 		const tempTransport = async () => {
 			const connection = new BareMuxConnection("/baremux/worker.js");
-			await connection.setTransport("/epoxy/index.mjs", [{ wisp: `wss://wisp.terbiumon.top/wisp/` }]);
+			await connection.setTransport("/epoxy/index.mjs", [{ wisp: "wss://wisp.terbiumon.top/wisp/" }]);
 			const scramjet = new window.ScramjetController({
 				prefix: "/service/",
 				files: {
@@ -59,12 +63,14 @@ const Root = () => {
 			scramjet.init();
 			navigator.serviceWorker.register("/anura-sw.js");
 		};
-		tempTransport();
+
+		await tempTransport();
+
 		if (sessionStorage.getItem("recovery")) {
-			setPag(<Recovery />);
+			setPag(() => Recovery);
 		} else if (sessionStorage.getItem("boot") || params.get("boot")) {
 			const upd = async () => {
-				let sha;
+				let sha: string;
 				if (await fileExists("/system/etc/terbium/hash.cache")) {
 					sha = await Filer.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8");
 				} else {
@@ -72,30 +78,31 @@ const Root = () => {
 				}
 				if (localStorage.getItem("setup")) {
 					if (localStorage.getItem("setup") && (sha !== hash || sessionStorage.getItem("skipUpd"))) {
-						setPag(<Updater />);
+						setPag(() => Updater);
 					} else {
 						if (sessionStorage.getItem("logged-in") && sessionStorage.getItem("logged-in") === "true") {
-							setPag(<App />);
+							setPag(() => App);
 						} else {
-							setPag(<Login />);
+							setPag(() => Login);
 						}
 					}
 				} else {
-					setPag(<Setup />);
+					setPag(() => Setup);
 				}
 			};
-			upd();
+			await upd();
 		} else if (sessionStorage.getItem("cusboot")) {
-			setPag(<CustomOS />);
+			setPag(() => CustomOS);
 		} else {
-			setPag(<Boot />);
+			setPag(() => Boot);
 		}
-	}, []);
-	return currPag;
+	});
+
+	return <Dynamic component={currPag()} />;
 };
 
-createRoot(document.getElementById("root")!).render(
-	<StrictMode>
-		<Root />
-	</StrictMode>,
-);
+const root = document.getElementById("root");
+
+if (root) {
+	render(() => <Root />, root);
+}

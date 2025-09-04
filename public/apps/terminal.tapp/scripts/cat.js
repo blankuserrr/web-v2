@@ -4,7 +4,7 @@ function cat(args) {
 		createNewCommandInput();
 		return;
 	}
-	displayOutput(`%cRight now cat only outputs the contents of a file.\n`, "color: #e39d34");
+	displayOutput("%cRight now cat only outputs the contents of a file.\n", "color: #e39d34");
 	tb.sh.cat(`${path}/${args._raw}`, (err, data) => {
 		if (err) {
 			displayError(`cat: ${err.message}`);

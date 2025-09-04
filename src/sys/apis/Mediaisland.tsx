@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { createEffect, createSignal, onMount } from "solid-js";
 import "../gui/styles/mediaisland.css";
-import { MediaProps } from "../types";
+import type { MediaProps } from "../types";
 
 export let setMusicFn: (props: MediaProps) => void;
 export let setVideoFn: (props: MediaProps) => void;
@@ -8,8 +8,8 @@ export let hideFn: () => void;
 export let isExistingFn: () => void;
 
 export default function MediaIsland() {
-	const [mediaType, setMediaType] = useState<"music" | "video" | null>(null);
-	const [mediaProps, setMediaProps] = useState<MediaProps | {}>({});
+	const [mediaType, setMediaType] = createSignal<"music" | "video" | null>(null);
+	const [mediaProps, setMediaProps] = createSignal<MediaProps | {}>({});
 	const removeMedia = () => {
 		setMediaType(null);
 		setMediaProps({});
@@ -26,31 +26,32 @@ export default function MediaIsland() {
 	 * @returns Components for COM
 	 * @author XSTARS
 	 */
-	useEffect(() => {
+	onMount(() => {
 		setMusicFn = setMusic;
 		setVideoFn = setVideo;
 		hideFn = removeMedia;
 		isExistingFn = () => {
-			window.dispatchEvent(new CustomEvent("isExistingMP", { detail: mediaType !== null }));
+			window.dispatchEvent(new CustomEvent("isExistingMP", { detail: mediaType() !== null }));
 		};
-	}, []);
+	});
 	return (
-		<div className={`island media_island w-[250px] h-[50px] rounded-lg ${mediaType ? "opacity-100" : "opacity-0"}`} style={{ backgroundImage: `url(${(mediaProps as MediaProps).background})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-			{mediaType === "music" && <Music {...(mediaProps as MediaProps)} onRemove={removeMedia} />}
-			{mediaType === "video" && <Video {...(mediaProps as MediaProps)} onRemove={removeMedia} />}
+		<div class={`island media_island w-[250px] h-[50px] rounded-lg ${mediaType() ? "opacity-100" : "opacity-0"}`} style={{ "background-image": `url(${(mediaProps() as MediaProps).background})`, "background-size": "cover", "background-position": "center", "background-repeat": "no-repeat" }}>
+			{mediaType() === "music" && <Music {...(mediaProps() as MediaProps)} onRemove={removeMedia} />}
+			{mediaType() === "video" && <Video {...(mediaProps() as MediaProps)} onRemove={removeMedia} />}
 		</div>
 	);
 }
 
 function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onBack }: MediaProps & { onRemove: () => void }) {
-	const [isPaused, setIsPaused] = useState(false);
-	const [elapsedTime, setElapsedTime] = useState(0);
-	const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-	const [track, setTrack] = useState(track_name);
-	useEffect(() => {
-		if (isPaused) {
-			if (intervalId) {
-				clearInterval(intervalId);
+	const [isPaused, setIsPaused] = createSignal(false);
+	const [elapsedTime, setElapsedTime] = createSignal(0);
+	const [intervalId, setIntervalId] = createSignal<NodeJS.Timeout | null>(null);
+	const [track, setTrack] = createSignal(track_name);
+	createEffect(() => {
+		if (isPaused()) {
+			const currentIntervalId = intervalId();
+			if (currentIntervalId) {
+				clearInterval(currentIntervalId);
 				setIntervalId(null);
 			}
 			return;
@@ -69,8 +70,8 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 		return () => {
 			if (id) clearInterval(id);
 		};
-	}, [isPaused, endtime, onRemove]);
-	useEffect(() => {
+	});
+	onMount(() => {
 		window.addEventListener("tb-pause-isl", () => PausePlay);
 		return () => window.removeEventListener("tb-pause-isl", () => PausePlay);
 	});
@@ -84,7 +85,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 	};
 	const next = () => {
 		if (onNext) {
-			// @ts-ignore
+			// @ts-expect-error
 			onNext();
 		} else {
 			onRemove();
@@ -92,7 +93,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 	};
 	const back = () => {
 		if (onBack) {
-			// @ts-ignore
+			// @ts-expect-error
 			onBack();
 		} else {
 			onRemove();
@@ -103,25 +104,25 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 		const seconds = time % 60;
 		return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 	};
-	useEffect(() => {
-		if (track.length > 21) {
-			setTrack(track.slice(0, 21) + "...");
+	createEffect(() => {
+		if (track().length > 21) {
+			setTrack(`${track().slice(0, 21)}...`);
 		}
-	}, [track_name]);
+	});
 	return (
-		<div className="music-player w-[250px] h-[50px]">
-			<div className="info">
-				<h1 className="track cursor-[var(--cursor-text)]">{track}</h1>
-				<h2 className="artist cursor-[var(--cursor-text)]">{artist}</h2>
+		<div class="music-player w-[250px] h-[50px]">
+			<div class="info">
+				<h1 class="track cursor-[var(--cursor-text)]">{track()}</h1>
+				<h2 class="artist cursor-[var(--cursor-text)]">{artist}</h2>
 			</div>
-			<div className="playerctrl gap-2">
+			<div class="playerctrl gap-2">
 				<svg
 					width="16"
 					height="9"
 					onClick={() => {
 						next();
 					}}
-					className="back cursor-pointer"
+					class="back cursor-pointer"
 					viewBox="0 0 16 9"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
@@ -131,12 +132,12 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 						fill="#A4A4A4"
 					/>
 				</svg>
-				{isPaused ? (
-					<svg width="14" height="15" onClick={PausePlay} className="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path fillRule="evenodd" clipRule="evenodd" d="M0 1.71209C0 0.411806 1.39998 -0.412497 2.5445 0.213937L13.1107 6.0023C14.2964 6.65153 14.2964 8.34847 13.1107 8.9977L2.54541 14.7861C1.40089 15.4125 0.00091555 14.5882 0.00091555 13.2879L0 1.71209Z" fill="#DFDFDF" />
+				{isPaused() ? (
+					<svg width="14" height="15" onClick={PausePlay} class="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.71209C0 0.411806 1.39998 -0.412497 2.5445 0.213937L13.1107 6.0023C14.2964 6.65153 14.2964 8.34847 13.1107 8.9977L2.54541 14.7861C1.40089 15.4125 0.00091555 14.5882 0.00091555 13.2879L0 1.71209Z" fill="#DFDFDF" />
 					</svg>
 				) : (
-					<svg width="14" height="15" onClick={PausePlay} className="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<svg width="14" height="15" onClick={PausePlay} class="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<rect width="5.25" height="15" rx="2.625" fill="#DFDFDF" />
 						<rect x="8.75" width="5.25" height="15" rx="2.625" fill="#DFDFDF" />
 					</svg>
@@ -147,7 +148,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 					onClick={() => {
 						back();
 					}}
-					className="forward cursor-pointer"
+					class="forward cursor-pointer"
 					viewBox="0 0 16 9"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
@@ -158,9 +159,9 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 					/>
 				</svg>
 			</div>
-			<div className="seekbar">
-				<h4 id="currenttime">{formatTime(elapsedTime)}</h4>
-				<div className="bar"></div>
+			<div class="seekbar">
+				<h4 id="currenttime">{formatTime(elapsedTime())}</h4>
+				<div class="bar" />
 				<h4 id="endtime">{formatTime(endtime)}</h4>
 			</div>
 		</div>
@@ -168,14 +169,15 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 }
 
 function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, onNext }: MediaProps & { onRemove: () => void }) {
-	const [isPaused, setIsPaused] = useState(false);
-	const [elapsedTime, setElapsedTime] = useState(0);
-	const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-	const [video, setVideo] = useState(video_name);
-	useEffect(() => {
-		if (isPaused) {
-			if (intervalId) {
-				clearInterval(intervalId);
+	const [isPaused, setIsPaused] = createSignal(false);
+	const [elapsedTime, setElapsedTime] = createSignal(0);
+	const [intervalId, setIntervalId] = createSignal<NodeJS.Timeout | null>(null);
+	const [video, setVideo] = createSignal(video_name);
+	createEffect(() => {
+		if (isPaused()) {
+			const currentIntervalId = intervalId();
+			if (currentIntervalId) {
+				clearInterval(currentIntervalId);
 				setIntervalId(null);
 			}
 			return;
@@ -194,8 +196,8 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 		return () => {
 			if (id) clearInterval(id);
 		};
-	}, [isPaused, endtime, onRemove]);
-	useEffect(() => {
+	});
+	onMount(() => {
 		window.addEventListener("tb-pause-isl", () => PausePlay);
 		return () => window.removeEventListener("tb-pause-isl", () => PausePlay);
 	});
@@ -206,7 +208,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 	};
 	const next = () => {
 		if (onNext) {
-			// @ts-ignore
+			// @ts-expect-error
 			onNext();
 		} else {
 			onRemove();
@@ -214,7 +216,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 	};
 	const back = () => {
 		if (onBack) {
-			// @ts-ignore
+			// @ts-expect-error
 			onBack();
 		} else {
 			onRemove();
@@ -225,25 +227,25 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 		const seconds = time % 60;
 		return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 	};
-	useEffect(() => {
-		if (video.length > 21) {
-			setVideo(video.slice(0, 21) + "...");
+	createEffect(() => {
+		if (video().length > 21) {
+			setVideo(`${video().slice(0, 21)}...`);
 		}
-	}, [video_name]);
+	});
 	return (
-		<div className="music-player w-[250px] h-[50px]">
-			<div className="info">
-				<h1 className="track cursor-[var(--cursor-text)]">{video}</h1>
-				<h2 className="artist cursor-[var(--cursor-text)]">{creator}</h2>
+		<div class="music-player w-[250px] h-[50px]">
+			<div class="info">
+				<h1 class="track cursor-[var(--cursor-text)]">{video()}</h1>
+				<h2 class="artist cursor-[var(--cursor-text)]">{creator}</h2>
 			</div>
-			<div className="playerctrl gap-2">
+			<div class="playerctrl gap-2">
 				<svg
 					width="16"
 					height="9"
 					onClick={() => {
 						next();
 					}}
-					className="back cursor-pointer"
+					class="back cursor-pointer"
 					viewBox="0 0 16 9"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
@@ -253,12 +255,12 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 						fill="#A4A4A4"
 					/>
 				</svg>
-				{isPaused ? (
-					<svg width="14" height="15" onClick={PausePlay} className="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path fillRule="evenodd" clipRule="evenodd" d="M0 1.71209C0 0.411806 1.39998 -0.412497 2.5445 0.213937L13.1107 6.0023C14.2964 6.65153 14.2964 8.34847 13.1107 8.9977L2.54541 14.7861C1.40089 15.4125 0.00091555 14.5882 0.00091555 13.2879L0 1.71209Z" fill="#DFDFDF" />
+				{isPaused() ? (
+					<svg width="14" height="15" onClick={PausePlay} class="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M0 1.71209C0 0.411806 1.39998 -0.412497 2.5445 0.213937L13.1107 6.0023C14.2964 6.65153 14.2964 8.34847 13.1107 8.9977L2.54541 14.7861C1.40089 15.4125 0.00091555 14.5882 0.00091555 13.2879L0 1.71209Z" fill="#DFDFDF" />
 					</svg>
 				) : (
-					<svg width="14" height="15" onClick={PausePlay} className="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<svg width="14" height="15" onClick={PausePlay} class="pauseplay cursor-pointer" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<rect width="5.25" height="15" rx="2.625" fill="#DFDFDF" />
 						<rect x="8.75" width="5.25" height="15" rx="2.625" fill="#DFDFDF" />
 					</svg>
@@ -269,7 +271,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 					onClick={() => {
 						back();
 					}}
-					className="forward cursor-pointer"
+					class="forward cursor-pointer"
 					viewBox="0 0 16 9"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
@@ -280,9 +282,9 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 					/>
 				</svg>
 			</div>
-			<div className="seekbar">
-				<h4 id="currenttime">{formatTime(elapsedTime)}</h4>
-				<div className="bar"></div>
+			<div class="seekbar">
+				<h4 id="currenttime">{formatTime(elapsedTime())}</h4>
+				<div class="bar" />
 				<h4 id="endtime">{formatTime(endtime)}</h4>
 			</div>
 		</div>

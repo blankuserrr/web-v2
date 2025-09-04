@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import solidPlugin from "vite-plugin-solid";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 // @ts-expect-error no types
@@ -7,13 +7,15 @@ import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 // @ts-expect-error no types
 import { server as wisp } from "@mercuryworkshop/wisp-js/server";
+import tailwindcss from "@tailwindcss/vite";
 import config from "dotenv";
 config.config();
 
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [
-		react(),
+		solidPlugin(),
+		tailwindcss(),
 		viteStaticCopy({
 			targets: [
 				{

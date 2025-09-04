@@ -42,14 +42,14 @@ async function loadApps() {
 async function displayDetails(app) {
 	document.querySelector(".appContainer").classList.remove("visible");
 	document.querySelector(".details-page").classList.add("visible");
-	let header = document.createElement("header");
-	let leftpane = document.createElement("div");
+	const header = document.createElement("header");
+	const leftpane = document.createElement("div");
 	leftpane.classList.add("left");
-	let rightpane = document.createElement("div");
+	const rightpane = document.createElement("div");
 	rightpane.classList.add("right");
 	header.appendChild(leftpane);
 	header.appendChild(rightpane);
-	let icon = document.createElement("img");
+	const icon = document.createElement("img");
 	icon.classList.add("icon");
 	icon.setAttribute("draggable", "false");
 	const icn = await window.parent.tb.libcurl.fetch(app.icon);
@@ -57,18 +57,18 @@ async function displayDetails(app) {
 	const icnurl = URL.createObjectURL(blob);
 	icon.src = icnurl;
 	leftpane.appendChild(icon);
-	let name = document.createElement("div");
+	const name = document.createElement("div");
 	name.classList.add("name");
 	name.innerText = app.name;
-	let authors = document.createElement("div");
+	const authors = document.createElement("div");
 	authors.classList.add("authors");
 	authors.innerText = app.authors;
-	let appnameauth = document.createElement("div");
+	const appnameauth = document.createElement("div");
 	appnameauth.classList.add("appnameauth");
 	appnameauth.appendChild(name);
 	appnameauth.appendChild(authors);
 	leftpane.appendChild(appnameauth);
-	let install = document.createElement("button");
+	const install = document.createElement("button");
 	install.classList.add("install");
 	const userName = await window.parent.tb.user.username();
 	const pwaExists = await new Promise(resolve => {
@@ -83,7 +83,7 @@ async function displayDetails(app) {
 		});
 	});
 	const appExists = await new Promise(resolve => {
-		Filer.fs.stat(`/apps/system/${app.name.toLowerCase()}.tapp`, function (err, stats) {
+		Filer.fs.stat(`/apps/system/${app.name.toLowerCase()}.tapp`, (err, stats) => {
 			console.log(err, stats);
 			if (err) {
 				resolve(false);
@@ -107,9 +107,8 @@ async function displayDetails(app) {
 		if (config.version !== app.version) {
 			console.log(`Update found: ${app.version} your on: ${config.version}`);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	};
 	const upd = await checkupd();
 	if (upd === true) {
@@ -122,11 +121,11 @@ async function displayDetails(app) {
 	install.addEventListener("click", () => installApp(app));
 	rightpane.appendChild(install);
 	document.querySelector(".details").appendChild(header);
-	let appinfo = document.createElement("div");
+	const appinfo = document.createElement("div");
 	appinfo.classList.add("appinfo");
 	document.querySelector(".details").appendChild(appinfo);
 	if (app.images) {
-		let images = document.createElement("div");
+		const images = document.createElement("div");
 		images.classList.add("app-images");
 		appinfo.appendChild(images);
 		const left = document.createElement("button");
@@ -148,7 +147,7 @@ async function displayDetails(app) {
 		const imagesContainer = document.createElement("div");
 		imagesContainer.classList.add("images-container", "flex", "gap-2");
 		app.images.forEach(async image => {
-			let img = document.createElement("img");
+			const img = document.createElement("img");
 			const icn = await window.parent.tb.libcurl.fetch(image);
 			const blob = await icn.blob();
 			const icnurl = URL.createObjectURL(blob);
@@ -178,7 +177,7 @@ async function displayDetails(app) {
 			}
 			scroll = Math.round(images.scrollLeft / images.offsetWidth);
 		});
-		let allImages = images.querySelectorAll("img").length;
+		const allImages = images.querySelectorAll("img").length;
 		let loadedImgs = 0;
 		images.querySelectorAll("img").forEach((img, index) => {
 			img.addEventListener("load", () => {
@@ -200,12 +199,12 @@ async function displayDetails(app) {
 			}
 		});
 	}
-	let description = document.createElement("div");
+	const description = document.createElement("div");
 	description.classList.add("description");
 	description.innerText = app.description;
 	appinfo.appendChild(description);
 	if (app.version) {
-		let version = document.createElement("div");
+		const version = document.createElement("div");
 		version.classList.add("version");
 		version.innerText = "Version: " + app.version;
 		appinfo.appendChild(version);
@@ -215,7 +214,7 @@ async function displayDetails(app) {
 async function createAppCard(app) {
 	const appCard = document.createElement("div");
 	appCard.classList.add("app-card", "flex", "gap-2", "p-3", "w-[242px]", "h-[80px]", "duration-150", "select-none", "cursor-pointer", "rounded-xl", "bg-[#00000028]");
-	let description = app.description;
+	const description = app.description;
 	const icn = await window.parent.tb.libcurl.fetch(app.icon);
 	const blob = await icn.blob();
 	const icnurl = URL.createObjectURL(blob);
@@ -277,7 +276,7 @@ async function searchApps() {
 		document.querySelector(".details").innerHTML = "";
 	}
 	const apps = await fetchFromGitHub();
-	let searchInput = window.parent.document.querySelector(".app-search");
+	const searchInput = window.parent.document.querySelector(".app-search");
 	const searchTerm = searchInput.value.toLowerCase();
 	const filteredApps = apps.filter(app => {
 		const nameMatches = app.name.toLowerCase().includes(searchTerm);
@@ -369,16 +368,16 @@ async function installApp(app) {
 					snapable: appData.wmArgs.snapable,
 				});
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: appName,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/system/${appName}.tapp/.tbconfig`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await Filer.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify([
 							{
 								name: appName,
@@ -479,9 +478,9 @@ async function installApp(app) {
 			await new Filer.fs.Shell().promises.rm(appPath, { recursive: true });
 			await window.parent.tb.launcher.removeApp(appName);
 			try {
-				let installedApps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				let installedApps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 				installedApps = installedApps.filter(app => app.name !== appName);
-				await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+				await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 			} catch (e) {
 				console.error(`Error updating installed.json: ${e}`);
 			}
@@ -545,16 +544,16 @@ async function installApp(app) {
 					id: appData.package,
 				};
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: appData.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/anura/${appName}/manifest.json`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await Filer.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify([
 							{
 								name: appData.name,
@@ -603,11 +602,11 @@ async function installApp(app) {
 	} else {
 		Filer.fs.exists("/apps/web_apps.json", async exists => {
 			if (exists) {
-				let data = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+				const data = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 				await Filer.fs.exists(`/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`, async exists => {
-					let apps = data.apps;
+					const apps = data.apps;
 					if (apps.includes(app["pkg-name"].toLowerCase()) || exists) {
-						let index = apps.indexOf(app["pkg-name"].toLowerCase());
+						const index = apps.indexOf(app["pkg-name"].toLowerCase());
 						apps.splice(index, 1);
 						data.apps = apps;
 						await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(data));
@@ -618,9 +617,9 @@ async function installApp(app) {
 						}
 						await new Filer.fs.Shell().promises.rm(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`, { recursive: true });
 						try {
-							let installedApps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+							let installedApps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 							installedApps = installedApps.filter(app => app.name !== appName);
-							await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+							await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 						} catch (e) {
 							console.error(`Error updating installed.json: ${e}`);
 						}
@@ -653,16 +652,16 @@ async function installApp(app) {
 							snapable: app["wmArgs"]["snapable"],
 						});
 						try {
-							let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+							const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 							apps.push({
 								name: app.name,
 								user: await window.parent.tb.user.username(),
 								config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
 							});
-							await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+							await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 						} catch {
 							await Filer.fs.promises.writeFile(
-								`/apps/installed.json`,
+								"/apps/installed.json",
 								JSON.stringify([
 									{
 										name: app.name,
@@ -679,8 +678,8 @@ async function installApp(app) {
 					}
 				});
 			} else {
-				let data = {};
-				let apps = [];
+				const data = {};
+				const apps = [];
 				apps.push(app["pkg-name"].toLowerCase());
 				data.apps = apps;
 				await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(data));
@@ -691,16 +690,16 @@ async function installApp(app) {
 					time: 5000,
 				});
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: app.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await Filer.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify({
 							name: app.name,
 							user: await window.parent.tb.user.username(),

@@ -23,7 +23,7 @@ export const registry = {
 		}
 
 		// void, nothing happens here for now other than storing changes for the session
-		//@ts-ignore
+		//@ts-expect-error
 		this.cache[data.path] = data.content;
 
 		if (window.Filer) {

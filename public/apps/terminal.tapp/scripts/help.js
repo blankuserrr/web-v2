@@ -13,7 +13,7 @@ async function help(args) {
 		fetch("./scripts/info.json")
 			.then(response => response.json())
 			.then(scriptList => {
-				for (let script of scriptList) {
+				for (const script of scriptList) {
 					displayOutput(`${script.usage.padEnd(30)} ${script.description}`);
 				}
 				createNewCommandInput();

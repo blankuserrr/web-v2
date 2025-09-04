@@ -19,7 +19,7 @@ export class Networking {
 		try {
 			this.WebSocket = this.libcurl.WebSocket;
 
-			// @ts-ignore
+			// @ts-expect-error
 			this.external.fetch = (...args) => {
 				return this.libcurl.fetch(...args);
 			};
@@ -58,17 +58,15 @@ export class Networking {
 		if (urlObj.hostname === "localhost") {
 			const port = Number(urlObj.port) || 80;
 			if (this.loopback.addressMap.has(port)) return this.loopback.call(port, requestObj);
-			else {
-				window.anura.notifications.add({
-					title: "Anura Networking Error",
-					description: "fetch requested to non binded localhost port",
-					timeout: 5000,
-				});
-				return new Response();
-			}
-		} else {
-			return this.external.fetch(url, methods);
+
+			window.anura.notifications.add({
+				title: "Anura Networking Error",
+				description: "fetch requested to non binded localhost port",
+				timeout: 5000,
+			});
+			return new Response();
 		}
+		return this.external.fetch(url, methods);
 	};
 	setWispServer = (wisp_server: string) => {
 		this.libcurl.set_websocket(wisp_server);
